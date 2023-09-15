@@ -48,6 +48,7 @@ class ComposerStaticInit9187ac96152e97b4a5dd6dad178f8510
             'Psr\\Container\\' => 14,
             'Psr\\Cache\\' => 10,
             'ParagonIE\\ConstantTime\\' => 23,
+            'PHPMailer\\PHPMailer\\' => 20,
         ),
         'N' => 
         array (
@@ -152,6 +153,10 @@ class ComposerStaticInit9187ac96152e97b4a5dd6dad178f8510
         'ParagonIE\\ConstantTime\\' => 
         array (
             0 => __DIR__ . '/..' . '/paragonie/constant_time_encoding/src',
+        ),
+        'PHPMailer\\PHPMailer\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phpmailer/phpmailer/src',
         ),
         'Native\\Laravel\\Database\\Factories\\' => 
         array (

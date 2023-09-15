@@ -18,8 +18,8 @@ if(isset($_REQUEST))
 { 
 
     //$url = $_REQUEST['link'];  
-    $id  = 18;     
-    //$id  = $_REQUEST['id'];    
+    //$id  = 18;     
+    $id  = $_REQUEST['id'];     
     
     $queue = getQueueInfoById($id); 
     $data = $queue['data'];
@@ -43,7 +43,7 @@ if(isset($_REQUEST))
                 {   
                     echo "Spread Sheet Created!!";echo "\r\n";   
                    $links = auditScrap($lk,$spreadSheetId,$id);    
-                   print_r($links);             
+                   print_r($links);                 
                 }                       
             } 
             //exit;                             
@@ -252,4 +252,6 @@ exit;
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
   </body>
-</html> 
+</html>
+
+<?php require('flush.php');?>   

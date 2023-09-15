@@ -23,6 +23,7 @@ return array(
     'Psr\\Container\\' => array($vendorDir . '/psr/container/src'),
     'Psr\\Cache\\' => array($vendorDir . '/psr/cache/src'),
     'ParagonIE\\ConstantTime\\' => array($vendorDir . '/paragonie/constant_time_encoding/src'),
+    'PHPMailer\\PHPMailer\\' => array($vendorDir . '/phpmailer/phpmailer/src'),
     'Native\\Laravel\\Database\\Factories\\' => array($vendorDir . '/nativephp/laravel/database/factories'),
     'Native\\Laravel\\' => array($vendorDir . '/nativephp/laravel/src'),
     'Native\\Electron\\' => array($vendorDir . '/nativephp/electron/src'),

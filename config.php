@@ -5,9 +5,15 @@
   ****************** Contact : algobasket@gmail.com ***************
   *********************** Github : algobasket *********************    
 */
+ob_start();
+session_start();
 //error_reporting(0); 
-set_time_limit(0);   
-// Database Config  
+set_time_limit(0); 
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;  
+
+// Database Config   
 $servername = "localhost"; 
 $username = "root";
 $password = "";
@@ -20,9 +26,6 @@ $conn = mysqli_connect($servername, $username, $password,$dbname);
 if (!$conn) {
   die("Connection failed: " . mysqli_connect_error());
 }
-
-
-
 
 
 // ********************* DB QUERY ********************* 
@@ -104,12 +107,12 @@ function getSmtps()
     return $data;   
 }
 
-function addnewSmtp($name,$server,$username,$pass,$port) 
+function addnewSmtp($name,$server,$username,$pass,$email,$port) 
 {
    global $conn;
-   $sql = "INSERT INTO settings SET setting_name='smtp',smtp_name='$name',smtp_server='$server',smtp_username='$username',password='$pass',port_no='$port'"; 
-   $query = mysqli_query($conn,$sql);
-   return true;  
+   $sql = "INSERT INTO settings SET setting_name='smtp',smtp_name='$name',smtp_server='$server',smtp_username='$username',password='$pass',smtp_email='$email',port_no='$port'"; 
+   $query = mysqli_query($conn,$sql); 
+   return true;   
 }
 
 function getEmailTemplates()
@@ -248,6 +251,15 @@ function insertSpreadSheetsRecords($links,$spreadsheetId,$data,$queueId)
         }
 }
 
+function getOwnerName($link)
+{
+   global $conn;
+    $sql = "SELECT * FROM scrap_data WHERE link = '$link' OR link LIKE '%$link%'";
+    $query = mysqli_query($conn,$sql); 
+    $data = mysqli_fetch_assoc($query);
+    return isset($data['email_privacy']) ? $data['email_privacy'] : "";
+}
+
 
 function getRealEmail($link)
 {
@@ -255,7 +267,7 @@ function getRealEmail($link)
     $sql = "SELECT * FROM scrap_data WHERE link = '$link' OR link LIKE '%$link%'";
     $query = mysqli_query($conn,$sql); 
     $data = mysqli_fetch_assoc($query);
-    return isset($data['email_privacy']) ?? $data['email_privacy'];
+    return isset($data['email_privacy']) ? $data['email_privacy'] : "";
 }
 
 
@@ -264,30 +276,84 @@ function getEmailQueueData($link)
     global $conn;
     $sql = "SELECT * FROM spreadsheets WHERE links = '$link' OR links LIKE '%$link%'";
     $query = mysqli_query($conn,$sql); 
-    $data = mysqli_fetch_assoc($query);
-       
-
-    $spreadsheetId =  $data['spreadsheet_code'];  
+    $data = mysqli_fetch_assoc($query); 
+    
+    $spreadsheetId =  isset($data['spreadsheet_code']) ? $data['spreadsheet_code'] : "";   
     $email = getRealEmail($link);     
-
+    
     $emailTemplates = getEmailTemplates();
     foreach($emailTemplates as $emailTemp){};    
     $emailTemplates = $emailTemp['email_template'];
     $subject = $emailTemp['subject'];
 
     $parsed_url = parse_url($link); 
-    $domain = $parsed_url['host']; 
-
-    $subject = str_replace('{domain}','$domain',$subject);     
-    $emailTemplate = str_replace(['{domain}','{spreadsheetLink}'],[$domain,$spreadsheetId],$emailTemplates);
+    $domain = $parsed_url['host'];  
+    $spreadsheetHref = '<a href="https://docs.google.com/spreadsheets/d/'.
+                       $spreadsheetId.'" target="__blank">https://docs.google.com/spreadsheets/d/'.$spreadsheetId.'</a>';
+    $subject = str_replace('{domain}',$domain,$subject);       
+    $emailTemplate = str_replace(['{domain}','{spreadsheetLink}'],[$domain,$spreadsheetHref],$emailTemplates);
 
     return [ 
-        'email'  => $email, 
-        'domain' => $domain, 
+        'email'   => $email,  
+        'domain'  => $domain, 
         'subject' => $subject, 
         'emailTemplate' => $emailTemplate, 
     ];       
 } 
+
+function getQueuedEmails($status)
+{
+    global $conn;
+    $sql = "SELECT * FROM emails WHERE queue_instant = 'queue' OR status = '$status'";
+    $query = mysqli_query($conn,$sql); 
+    while($row = mysqli_fetch_assoc($query))
+        $data[] = $row;
+
+    return $data;  
+}
+
+function triggerEmailApi($to,$toName,$subject,$body) 
+{
+   
+
+   require 'vendor/autoload.php'; // Adjust the path if needed
+
+    global $conn; 
+
+    $sql = "SELECT * FROM settings WHERE setting_name = 'smtp' AND status = 1"; 
+    $query = mysqli_query($conn,$sql); 
+    $data = mysqli_fetch_assoc($query);
+
+    // Create a new PHPMailer instance
+    $mail = new PHPMailer(true); 
+
+    try { 
+        // SMTP server settings 
+        $mail->isSMTP(); 
+        $mail->Host       = $data['smtp_server']; // Your SMTP server
+        $mail->SMTPAuth   = true; 
+        $mail->Username   = $data['smtp_username'];
+        $mail->Password   = $data['password'];     
+        $mail->SMTPSecure = ''; // Enable TLS encryption, or use 'ssl' if needed
+        $mail->Port       = $data['port_no']; // SMTP port (587 for TLS, 465 for SSL)
+
+        // Sender and recipient
+        $mail->setFrom($data['smtp_email'], $data['smtp_name']); 
+        $mail->addAddress($to, $toName);
+
+        // Email content
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $body;
+
+        // Send the email
+        $mail->send();
+        return true;
+    } catch (Exception $e) {
+        echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
+        //return false;
+    }
+}
 
 
 ?> 

@@ -15,25 +15,30 @@ require 'scrapper.php';
 require 'vendor/autoload.php';
 
 if(isset($_REQUEST))      
-{  
+{ 
+
+    //$url = $_REQUEST['link'];  
+    //$id  = 18;     
+    $id  = $_REQUEST['id'];     
     
-    //$url = $_REQUEST['link'];
-    $id = $_REQUEST['id'];
-    
-    $queue = getQueueInfoById($id);
+    $queue = getQueueInfoById($id); 
     $data = $queue['data'];
-    $decode = safeJsonDecode($data);
-    //print_r($decode);exit;        
+    $decode = safeJsonDecode($data);  
+    //preTest($decode);exit;           
     foreach($decode as $r)    
     {
-        $links = $r['links'];
-        foreach($links as $link)
-        {
-           $result = auditScrap($link);
-           print_r($result);              
-        }     
-    } 
-}   
+        $linksArray = $r['links']; 
+        foreach($linksArray as $lk)
+        {   
+            $parsed_url = parse_url($lk); 
+            $domain = $parsed_url['host'];
+            $spreadSheetName = preg_replace('/^www\./', '', $domain);
+               
+            $links = auditScrap($lk,$spreadSheetId,$id);     
+                                          
+        }            
+    }   
+};
 ?>     
  
 
@@ -235,4 +240,5 @@ if(isset($_REQUEST))
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
   </body>
-</html> 
+</html>
+<?php require('flush.php');?> 

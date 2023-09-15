@@ -11,10 +11,13 @@
   5. Website URL    
 */ 
 require 'config.php';     
-require 'scrapper.php'; 
-if(isset($_GET['q']))
+require 'scrapper.php';
+
+
+
+if(isset($_GET['q'])) 
 {
-    $id = $_GET['q'];     
+    $id = $_GET['q'];    
     $queue = getQueueInfoById($id);   
     $data = $queue['data'];    
     $decode = safeJsonDecode($data);        
@@ -23,14 +26,24 @@ if(isset($_GET['q']))
         $linksArray = $r['links'];
         $firstLink =  $linksArray[0];
         $getEmailQueueData = getEmailQueueData($firstLink);     
-
+        $email = $getEmailQueueData['email'];
+        $domain = $getEmailQueueData['domain'];
+        $subject = $getEmailQueueData['subject'];
+        $emailTemplate = $getEmailQueueData['emailTemplate'];
         foreach($linksArray as $lk)
         {   
             $parsed_url = parse_url($lk); 
-            $domain = $parsed_url['host'];      
+            $host = $parsed_url['host'];
+            $links[] = ['domain' => $host,'url' => $lk];       
         }            
     }   
-}    
+} 
+ if(@$_GET['operation'] == 'delete') 
+{
+  deleteQueue($_GET['q']);  
+  header('location:email.php?q='.$_GET['q']);
+  exit;       
+}      
 ?>   
 <!doctype html>
 <html lang="en">
@@ -41,12 +54,29 @@ if(isset($_GET['q']))
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Bungee Spice|Silkscreen">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css" integrity="sha384-b6lVK+yci+bfDmaY1u0zE8YYJt0TZxLEAFyYSLHId4xoVvsrQu3INevFKo+Xir8e" crossorigin="anonymous">
+    <link href="https:///cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" rel="stylesheet">
     <style type="text/css">
          input[type="text"],textarea[name="locations"],textarea[name="template"]{    
             border:1px solid #000;
             border-radius: 0;
         }
+        .green-border{
+           border:2px solid #146c43 !important;  
+        }
+        .red-border{
+            border:2px solid #bd6b7b !important; 
+        }
     </style> 
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script> 
+     <script type="text/javascript" src="//cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready( function () {
+              $('.tablePaging').DataTable();
+              // $('.openLinkModal').click(function(){
+              //     $('#linkModal').modal('show'); 
+              // }); 
+          } );
+    </script>     
   </head>
   <body class="bg-light text-success">  
   
@@ -80,48 +110,68 @@ if(isset($_GET['q']))
         <table class="table table-bordered">    
             <tr>
                 <td><input type="text" class="form-control" name="url" placeholder="URL" value="<?= $firstLink;?>" required></td>
-                <td style="width: 20px;"><a href="" class="btn btn-success"><i class="bi bi-x-octagon-fill"></i></a></td> 
-                <td><a href="" class="btn btn-primary"><i class="bi bi-search"></i></a></td>
+                <td style="width: 20px;"><a href="" class="btn btn-dark"> <i class="bi bi-slash-circle"></i></a></td> 
+                <td><a href="./oldcode2/audit.php?link=<?= base64_encode($firstLink);?>" class="btn btn-primary" target="__blank"><i class="bi bi-search"></i></a></td>
             </tr>
             <tr>
-                <td><input type="text" class="form-control" name="fullname" placeholder="Full Name" required></td>
+                <td><input type="text" class="form-control fullname" name="fullname" placeholder="Full Name" value="<?= $email;?>" required></td>
                 <td style="width: 20px;"></td>
                 <td><a href=""></a></td>
             </tr>
             <tr>
-                <td><input type="text" class="form-control" name="email" placeholder="Email" value="<?= $getEmailQueueData['email'];?>" required></td> 
-                <td style="width: 20px;"><a href="" class="btn btn-dark"><i class="bi bi-check-circle-fill"></i></a></td> 
-                <td></td>  
+                <td><input type="text" class="form-control isEmailReal" name="email" placeholder="Email" value="<?= $email;?>" required></td> 
+                <td style="width: 20px;">
+                    <a href="javascript:void(0)" class="btn btn-success verify-email"><i class="bi bi-envelope"></i></a>
+                </td>  
+                <td><span class="isEmailValid"></span></td>  
+            </tr>
+            <tr>
+                <td><input type="text" class="form-control subject" placeholder="Subject" value="<?= $subject;?>" required></td>
+                <td style="width: 20px;"></td>
+                <td><a href=""></a></td>
             </tr>
             <tr>
                 <td colspan="3">
-                    <textarea class="form-control" placeholder="Email Templates" name="template" style="height:300px"></textarea>
-                </td>
+                    <textarea class="form-control copy-link" placeholder="Email Templates" name="template" style="height:300px"><?= $emailTemplate;?></textarea>
+                </td>  
             </tr>
             <tr>
                 <td>
-                    <a href="" class="btn btn-outline-dark" name="emailq">Email Queue</a>
-                    <a href="" class="btn btn-outline-dark" name="emailnow">Email Now</a>
+                    <a href="javascript:void(0)" class="btn btn-outline-dark emailqueue" name="emailqueue">Email Queue</a>
+                    <a href="javascript:void(0)" class="btn btn-outline-dark emailnow" name="emailnow">Email Now</a> 
+                    <span class="emailSentStatus"></span> 
                 </td> 
                 <td></td> 
-                <td><a href="" class="btn btn-outline-dark copyEmailTemp">Copy</a></td>  
+                <td><a href="" class="btn btn-outline-dark copyEmailTemp">Copy</a></td>    
             </tr>
         </table>
         
-        <br><hr>
+        <br>
          
-         <table class="table table-bordered">
-            <tr>
-                <td>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</td>
-                <td style="width: 20px;"><a href="">Delete</a></td>
-                <td>Search</td>
-            </tr>
-        
-            <tr>
-                <td colspan="3">
-                    1 . 2 . 3 . 4 . 5 . 6 ......
-                </td> 
-            </tr>
+         <table class="table table-bordered tablePaging"> 
+            <thead>
+                <tr>
+                    <td>URL</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </thead>
+            <tbody>
+               <?php foreach($links as $link) : ?> 
+                    <tr>
+                        <td><?= removeQueryString($link['url']);?></td>  
+                        <td style="width: 20px;"> <a href="javascript:void(0)" data-delete="email.php?q=<?= $_GET['q'];?>&operation=delete" data-title="Delete" data-msg="Do you want to delete it ?" class="btn btn-dark btn-sm openModal">
+                            <i class="bi bi-slash-circle"></i>  
+                          </a> 
+                        </td>
+                        <td>
+                            <a href="./oldcode2/audit.php?link=<?= base64_encode($link['url']);?>" class="btn btn-primary btn-sm" target="__blank">
+                                <i class="bi bi-search"></i>
+                            </a>
+                        </td>   
+                    </tr> 
+               <?php endforeach ?>
+             </tbody>
         </table>
 
 
@@ -132,7 +182,118 @@ if(isset($_GET['q']))
     </center> 
    </div> 
     
-    <script type="text/javascript">  
+
+     <!-- Modal -->
+        <div class="modal fade modalPopup" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true"> 
+          <div class="modal-dialog modal-dialog-centered modal-lg"> 
+            <div class="modal-content">
+              <div class="modal-header">
+                <h1 class="modal-title fs-5" id="exampleModalLabel"></h1> 
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <form action="audit.php" target="_blank">  
+              <div class="modal-body"></div> 
+              <div class="modal-footer"> 
+                <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">Close</button>
+                 <a href="" class="btn btn-outline-dark confirmBtn"></a> 
+              </div>
+               </form>
+            </div>
+          </div>
+        </div> 
+    
+    <script type="text/javascript">
+     $(document).ready(function(){
+        $('.openModal').click(function(){
+           var link  = $(this).attr('data-delete');
+           var title = $(this).attr('data-title');
+           var msg   = $(this).attr('data-msg');
+           $('.modal-title').html(title);
+           $('.confirmBtn').html(title);
+           $('.modal-body').html(msg);
+           $('.confirmBtn').attr('href',link); 
+           $('.modalPopup').modal('show');   
+        });
+        $('.verify-email').click(function(){
+            
+           var email  = $('.isEmailReal').val();
+           $('.isEmailReal').addClass('red-border'); 
+           if(email)
+           {    
+               $('.isEmailValid').html('<img src="./icons/loading.gif" style="width:70px;height:50px;position:absolute"/>');
+               var data   = {
+                 email : email, 
+                 isEmailValidAjax : 1 
+               }; 
+               $.ajax({
+                 method:'POST',
+                 url:'ajax.php',
+                 data:data,
+                 success:function(response){
+                    $('.isEmailValid').html(response); 
+                    $('.isEmailReal').removeClass('red-border').addClass('green-border');
+                    console.log(response); 
+                 }
+               });
+           }
+        });
+         $('.emailqueue').click(function(){
+            
+           var email  = $('.isEmailReal').val();
+           var name   = $('.fullname').val();
+           var subject   = $('.subject').val();
+           var template   = $('.copy-link').val();  
+           if(email && name && template)
+           {    
+               $('.emailSentStatus').html('<img src="./icons/loading.gif" style="width:70px;height:50px;position:absolute"/>');
+               var data   = {
+                 email_to : email,
+                 name : name,
+                 template : template, 
+                 subject : subject,
+                 queue_instant : "queue", 
+                 emailSentAjax : 1 
+               }; 
+               $.ajax({
+                 method:'POST',
+                 url:'ajax.php',
+                 data:data,
+                 success:function(response){
+                    $('.emailSentStatus').html(response).show(); 
+                    console.log(response);  
+                 }
+               });
+           }
+        });
+         $('.emailnow').click(function(){ 
+            
+           var email  = $('.isEmailReal').val();
+           var name   = $('.fullname').val();
+           var subject   = $('.subject').val();
+           var template   = $('.copy-link').val();  
+           if(email && name && template)
+           {    
+               $('.emailSentStatus').html('<img src="./icons/loading.gif" style="width:70px;height:50px;position:absolute"/>');
+               var data   = {
+                 email_to : email,
+                 name : name,
+                 template : template,
+                 subject : subject, 
+                 queue_instant : "instant", 
+                 emailSentAjax : 1  
+               }; 
+               $.ajax({
+                 method:'POST',
+                 url:'ajax.php', 
+                 data:data,
+                 success:function(response){ 
+                    $('.emailSentStatus').html(response).show(); 
+                    console.log(response);  
+                 }
+               });
+           }
+        });
+    });     
         function copyLink()
         {
             var links = document.querySelectorAll('.copy-link');
@@ -152,4 +313,5 @@ if(isset($_GET['q']))
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
   </body>
-</html>  
+</html>
+<?php require('flush.php');?> 

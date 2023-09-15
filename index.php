@@ -107,13 +107,19 @@ if(isset($_POST['startScrapping']))
         <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
           <div class="navbar-nav">
             <a class="nav-link active h1" aria-current="page" href="index.php">Home</a>
+             <?php if(@$_SESSION['username']){ ?> 
             <a class="nav-link h1" href="audit-ready-to-process.php">Audit Ready To Process</a>
             <a class="nav-link h1" href="settings.php?s=email-verify-api">Email Verify API</a>
             <a class="nav-link h1" href="settings.php?s=smtp">SMTP Settings</a> 
             <a class="nav-link h1" href="settings.php?s=email-templates">Email Template Settings</a>  
-            <a class="nav-link h1" href="logout.php">Logout</a>  
             
-          </div> 
+       
+             <a class="nav-link h1" href="auth.php?logout=1">Logout</a> 
+        <?php }else{ ?>
+             <a class="nav-link h1 btn-success" href="auth.php" style="float: right;">Login</a>       
+        <?php } ?> 
+            
+          </div>  
         </div>
       </div>
     </nav>
@@ -137,10 +143,12 @@ if(isset($_POST['startScrapping']))
             <div class="col-md-6"> 
                 <textarea class="form-control" name="locations" placeholder="Location separated by newline or ','...eg : Dallas Tx,Orange County California,..." required style="height: 300px;"><?= $defaultLocations;?></textarea>  
             </div>   
-        </div><br>  
-        <div class="row">
-            <input type="submit" name="startScrapping" value="ADD TO QUEUE" class="btn btn-dark" /> 
-        </div> 
+        </div><br> 
+
+         <?php if(isset($_SESSION['username'])) : ?> 
+             <div class="row"><input type="submit" name="startScrapping" value="ADD TO QUEUE" class="btn btn-dark" /></div> 
+         <?php endif ?>  
+
         </form>
 
        <hr>
@@ -150,7 +158,8 @@ if(isset($_POST['startScrapping']))
            <?php foreach($queueList as $q) : ?>
            <tr>
                <td><?= strtoupper($q['name']);?></td> 
-               <td><b><?= $q['link_counts'];?><b></td>  
+               <td><b><?= $q['link_counts'];?><b></td> 
+               <?php if(isset($_SESSION['username'])) : ?>
                <td style="width:50px;">
                   <a href="javascript:void(0)" data-delete="index.php?id=<?= $q['id'];?>&operation=delete" data-title="Delete" data-msg="Do you want to delete it ?" class="btn btn-dark btn-sm openModal">
                     <i class="bi bi-trash3-fill"></i>  
@@ -161,7 +170,8 @@ if(isset($_POST['startScrapping']))
               </td> 
               <td style="width:50px;"> 
                 <a href="javascript:void(0)" class="btn btn-success btn-sm" onclick="runAudit(<?= $q['id'];?>)"><i class="bi bi-play-fill"></i></a>
-              </td>     
+              </td> 
+              <?php endif ?> 
            </tr>
        <?php endforeach ?> 
        </table>

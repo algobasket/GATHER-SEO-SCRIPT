@@ -31,8 +31,9 @@ if(isset($_POST['addNewSmtp']))
   $smtpServer   = $_POST['smtpServer'];
   $smtpUsername = $_POST['smtpUsername'];
   $smtpPassword = $_POST['smtpPassword'];
+  $smtpEmail = $_POST['smtpEmail'];
   $smtpPort     = $_POST['smtpPort'];
-  $result = addnewSmtp($smtpName,$smtpServer,$smtpUsername,$smtpPassword,$smtpPort);     
+  $result = addnewSmtp($smtpName,$smtpServer,$smtpUsername,$smtpPassword,$smtpEmail,$smtpPort);     
 } 
 
 
@@ -45,8 +46,8 @@ if(isset($_POST['addEmailTemplate']))
 
  if(@$_GET['operation'] == 'delete') 
 {
-  $apiVendor = $_POST['apiVendor'];
-  $apiKey = $_POST['apiKey'];
+  $apiVendor = @$_POST['apiVendor'];
+  $apiKey = @$_POST['apiKey'];
   deleteSetting($_GET['id']);     
 }    
 ?>   
@@ -172,12 +173,16 @@ if(isset($_POST['addEmailTemplate']))
                  <tr>    
                     <td><input type="text" class="form-control" name="smtpServer" placeholder="SMTP Server" required></td>
                  </tr>
+                  <tr>    
+                    <td><input type="text" class="form-control" name="smtpEmail" placeholder="SMTP Email" required></td>
+                 </tr>
                  <tr>     
                     <td><input type="text" class="form-control" name="smtpUsername" placeholder="SMTP Username" required></td> 
                  </tr>
                  <tr>    
                     <td><input type="text" class="form-control" name="smtpPassword" placeholder="SMTP password" required></td>
                  </tr>
+                 
                  <tr>    
                     <td><input type="text" class="form-control" name="smtpPort" placeholder="SMTP port" required></td> 
                  </tr>
@@ -189,17 +194,27 @@ if(isset($_POST['addEmailTemplate']))
 
          <br><hr>
          <table class="table table-bordered">
+               <tr>
+                <th>SMTP Name</th> 
+                <th>SMTP Server</th>    
+                <th>SMTP Username</th>    
+                <th>SMTP Email</th>    
+                <th>SMTP Password</th>    
+                <th>SMTP Port</th>      
+                <th></th>  
+            </tr>
             <?php $getSmtps = getSmtps();?>
             <?php foreach($getSmtps as $smtp) : ?>
             <tr>
                 <td><?= $smtp['smtp_name'];?></td> 
                 <td><?= $smtp['smtp_server'];?></td>    
                 <td><?= $smtp['smtp_username'];?></td>    
+                <td><?= $smtp['smtp_email'];?></td>    
                 <td><?= $smtp['password'];?></td>    
                 <td><?= $smtp['port_no'];?></td>      
-                <td><a href="javascript:void(0)" data-delete="settings.php?s=email-verify-api&id=<?= $smtp['id'];?>&operation=delete" data-title="Delete" data-msg="Do you want to delete it ?"  class="btn btn-outline-dark openModal">Delete</a></td>  
+                <td><a href="javascript:void(0)" data-delete="settings.php?s=smtp&id=<?= $smtp['id'];?>&operation=delete" data-title="Delete" data-msg="Do you want to delete it ?"  class="btn btn-outline-dark openModal">Delete</a></td>  
             </tr>
-           <?php endforeach ?>
+           <?php endforeach ?> 
         </table>
 
     <?php endif ?>
@@ -306,3 +321,5 @@ if(isset($_POST['addEmailTemplate']))
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
   </body>
 </html>  
+
+<?php require('flush.php');?>

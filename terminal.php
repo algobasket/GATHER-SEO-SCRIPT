@@ -345,5 +345,5 @@ require 'scrapper.php';
     
     }
 
-?>   
+?>    
 

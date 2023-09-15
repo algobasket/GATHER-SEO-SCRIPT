@@ -1896,4 +1896,21 @@ function preTest($data)
   echo '</pre>';
 }
 
+
+function removeQueryString($url)  
+{
+    // Find the last position of '/'
+    $lastSlashPos = strrpos($url, '/');
+
+    if ($lastSlashPos !== false) 
+    {
+        // Split the URL into two parts
+        $beforeLastSlash = substr($url, 0, $lastSlashPos);
+        $afterLastSlash = substr($url, $lastSlashPos + 1); 
+    }
+    return $beforeLastSlash; 
+}
+
+
+
 ?> 

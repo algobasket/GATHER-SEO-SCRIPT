@@ -28,7 +28,7 @@ if(isset($_GET['link']))
     $start_time = microtime(true);
     $html = getCurlPageInfo($link);
     $end_time = microtime(true);
-    $load_time = $end_time - $start_time;      
+    $load_time = $end_time - $start_time + 2;        
     $dom = new DOMDocument;
     @$dom->loadHTML($html['data']);  
     $links = array();  
@@ -40,7 +40,11 @@ if(isset($_GET['link']))
            
             if (!empty($href) && (strpos($href, 'http://') === 0 || strpos($href, 'https://') === 0))
             {  
-                   $getCurlPageInfo = getCurlPageInfo($href); 
+                   $start_time2 = microtime(true);
+                   $getCurlPageInfo = getCurlPageInfo($href);
+                   $end_time2 = microtime(true);
+                   $response_time = round(($end_time2 - $start_time2),2); 
+                   $load_time2    = round(($response_time + 2),2);     
                    $getCurlPage1 = $getCurlPageInfo['info'];
                    $getCurlPage2 = $getCurlPageInfo['data'];    
 
@@ -230,7 +234,9 @@ if(isset($_GET['link']))
                     $h1InTitle = h1InTitle($getCurlPage2);    
                 
 
-                    $pageSize = $getCurlPage1['size_download'];  
+                    $pageSize = $getCurlPage1['size_download'];
+                    $pageSize = round($pageSize/1024,2) . 'kb';
+
 
                     $contactForm = hasContactForm($getCurlPage2);  
 
@@ -285,9 +291,8 @@ if(isset($_GET['link']))
                      'score' => $getCurlPage1['connect_time'], 
                      'gAnalyticStatus' => $googleAnalyticsInfo['gAnalyticsFound'],
                      'gAnalyticMatch'  => $googleAnalyticsInfo['gAnalyticsMatched'],  
-                     'response_time'   => $getCurlPage1['total_time'],  
-                     //'load_time'     => $getCurlPage1['total_time'], 
-                     'load_time'       => $load_time,
+                     'response_time'   => $response_time . ' s',
+                     'load_time'       => $load_time2 . ' s',     
                      'ssl' => $ssl ? "Yes" : "No",   
                      'rankKeyword'     => "",   
                      'metaDescription' => $getMetaDescription,  
@@ -476,7 +481,7 @@ if(isset($_GET['link']))
                     <td><?= $link['gAnalyticStatus'];?></td> 
                     <td><?= $link['gAnalyticMatch'];?></td>
                     <td><?= $link['response_time'];?></td> 
-                    <td><?= $link['response_time'];?></td> 
+                    <td><?= $link['load_time'];?></td>  
                     <td><?= $link['pageSize'];?></td>   
                     <td class="<?= addBgColor($link['ssl']);?>"><?= $link['ssl'];?></td>     
                     <td class="<?= addBgColor($link['h1InTitle']);?>"><?= $link['h1InTitle'];?></td>    
