@@ -1,0 +1,9 @@
+<?php
+if(!isset($_SESSION['username']))
+{
+   header('location:auth.php');   
+   exit;  
+} 
+//unset($_SESSION['alert']); 
+//unset($_SESSION['redirectUrl']);  
+?>
