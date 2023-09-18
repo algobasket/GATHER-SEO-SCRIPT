@@ -14,7 +14,7 @@ require 'config.php';
 require 'scrapper.php';
 
 
-$getBlacklistLink = getBlacklistLink();
+$getBlacklistLink = getBlacklistLink(); 
 
  if(@$_GET['operation'] == 'delete') 
 {
@@ -22,6 +22,18 @@ $getBlacklistLink = getBlacklistLink();
   whitelistLink(0,$link);    
   header('location:blacklisted.php');  
   exit;       
+}
+
+if(isset($_POST['submitForBlacklist']))
+{
+   $link = $_POST['link'];
+   $q = 0; 
+  
+   $domain = isLinkOrDomain($link);
+
+   blacklistLink($q,$domain);    
+   header('location:blacklisted.php');  
+   exit;     
 }         
 ?>   
 <!doctype html>
@@ -33,12 +45,24 @@ $getBlacklistLink = getBlacklistLink();
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Bungee Spice|Silkscreen">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css" integrity="sha384-b6lVK+yci+bfDmaY1u0zE8YYJt0TZxLEAFyYSLHId4xoVvsrQu3INevFKo+Xir8e" crossorigin="anonymous"> 
-    <style type="text/css"> 
-         input[type="text"],textarea[name="locations"],textarea[name="keywords"],tr{   
-            border:1px solid #000;
-            border-radius: 0;
+    <style type="text/css">
+         input[type="text"]{      
+            border:1px solid #000 !important;
+            border-radius: 0 !important;
+        }
+        tr{
+          border-bottom: 1px solid #fff !important; 
+        }
+        hr{
+          border:1px solid #000 !important; 
+        }
+        .borderTable > tbody > tr {   
+           border: 1px solid #000 !important; 
         } 
-    </style> 
+        .borderTable > tbody > tr > td{   
+           border-left: 1px solid #000 !important; 
+        } 
+    </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script> 
   </head>
   <body class="bg-light text-success">  
@@ -74,21 +98,43 @@ $getBlacklistLink = getBlacklistLink();
 
    <center>
         <br><br><br><br><br><br>
-        <h1 class="text-center display-2 gfonts">Blacklisted</h1>  
+        <h1 class="text-center display-2 gfonts">Blacklisted</h1>   
         
-       <hr>
+         <hr>
+
+        <form method="POST">   
+          <table class="table"> 
+            <tr>
+              <td><input type="text" class="form-control" name="link" placeholder="Enter link or domain to blacklist.." required /></td>
+              <td><input type="submit" class="btn btn-dark " name="submitForBlacklist" /></td>
+            </tr>
+          </table>
+        </form>  
+
+       <hr><br>
       
-       <table class="table table-bordered table-hover"> 
-           <?php foreach($getBlacklistLink as $q) : ?>  
-           <tr >   
-               <td style="cursor: pointer;"><?= $q['link'];?></td>  
+       <table class="table table-hover borderTable"> 
+          <tr>
+             <th>Website</th>
+             <th>Blacklist Type</th>
+             <th>Blacklisted Date</th>
+             <th>Whitelist Date</th>
+             <th></th>
+           </tr>            
+           <?php foreach($getBlacklistLink as $q) : ?> 
+           
+           <tr>   
+               <td style="cursor: pointer;"><b><?= $q['link'];?></b></td>  
+               <td style="cursor: pointer;"><?= ($q['queue_id'] == 0) ? "<b class='text-success'>Blacklisted Manually</b>" :"<b class='text-danger'>Blacklisted Through Links</b>"  ;?></td>  
+               <td style="cursor: pointer;"><?= date('d M,Y',strtotime($q['created_at']));?></td>  
+               <td style="cursor: pointer;"><?= date('d M,Y',strtotime($q['created_at']  . ' +1 year'));?></td>  
                <td style="width:50px;"><a href="javascript:void(0)" data-delete="blacklisted.php?id=<?= $q['id'];?>&operation=delete&link=<?= $q['link'];?>" data-title="Whitelist" data-msg="Do you want to whitelist this link/domain ?" class="btn btn-dark btn-sm openModal"><i class="bi bi-trash3-fill"></i></a></td>    
                <td style="width:50px;"><a href="view-audit.php?link=<?= $q['link'];?>" class="btn btn-success btn-sm"><i class="bi bi-search"></i></a></td>      
-           </tr>
-       <?php endforeach ?> 
-       </table>
+           </tr> 
+           <?php endforeach ?> 
+       </table>     
         
-        <br><hr>
+        <br><hr> 
         <footer>
             <h5>Scrapping Script | Developed By Algobasket</h5>  
         </footer>  

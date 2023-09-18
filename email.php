@@ -47,10 +47,9 @@ if(isset($_GET['q']))
      whitelistLink($q,$domain);      
   }else{
      blacklistLink($q,$domain);    
-  }  
-  
+  }    
   header('location:email.php?q='.$_GET['q']);
-  exit;       
+  exit;        
 }      
 ?>   
 <!doctype html>

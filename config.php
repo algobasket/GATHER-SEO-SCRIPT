@@ -7,13 +7,14 @@
 */
 ob_start();
 session_start();
-//error_reporting(0); 
-set_time_limit(0); 
+error_reporting(0); 
+set_time_limit(0);  
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;  
 
-
+$AppScriptField  = "https://script.google.com/macros/s/AKfycbyfKaybGhHzjogxpFTGrLTkJVAE2SHFwMWnhWd7sPn1Nq8DqeA52Ev7wVcGhgFNDW3_Eg/exec";
+$AppScriptRecord = "https://script.google.com/macros/s/AKfycbx9gqdkPZZAoU4GgBMnDLxeP7Ks-5zTKbc4HOm8JKMoY0lAWkdEvMOa94wI08H62oupBw/exec";
 
 // Check if the application is running on localhost
 $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
@@ -199,6 +200,8 @@ function addnewTemplate($subject,$email_template)
 function createSpreadSheetsFields($links,$spreadSheetName) 
 {
     global $conn;
+    global $AppScriptField;
+
     $folderId = '1mdsXQ79d44bWoAss-26DCfBHC4fufVu3'; // Replace with the actual folder ID
     $fields = 'URL,Depth,Score,GAnalyticStatus,GAnalyticMatch,ResponseTime,LoadTime,PageSize,SSL,H1inTitle,MetaDescription,'.  
               'MetaDescriptionLength,Status,StatusCode,Email,EmailPrivacy,Phones,SocialLinks,ContactForms,Title,WordCounts,2Words,'. 
@@ -206,7 +209,8 @@ function createSpreadSheetsFields($links,$spreadSheetName)
               'ImageAltTags,OutboundLinks,TotalOutboundLinks,FaviconStatus,Indexability,IndexabilityStatus,XMLSitemap,Robots.txt';                
              
  
-    $webApp = 'https://script.google.com/macros/s/AKfycbzK0KQAwtbV-nxSueJFC_CB-aarX_rCGEKXi8mgrBW7m5utFqTdvtWtp0NHRA_bMlGy/exec';                  
+    $webApp = $AppScriptField; 
+
     $script_url = $webApp . '?folderId=' . $folderId . '&spreadsheetName=' . $spreadSheetName .'&headers=' . trim($fields);                        
 
     $response = getCurlContent($script_url);         
@@ -227,6 +231,7 @@ function createSpreadSheetsFields($links,$spreadSheetName)
 function insertSpreadSheetsRecords($links,$spreadsheetId,$data,$queueId,$saveToSpreadSheet,$saveToDB,$saveToBothSpreadAndDB) 
 {
         global $conn;   
+        global $AppScriptRecord;    
         
         $array = array(   
                 'queue_id' => $queueId,
@@ -293,7 +298,7 @@ function insertSpreadSheetsRecords($links,$spreadsheetId,$data,$queueId,$saveToS
             
             if(($spreadsheetId != 0) OR ($spreadsheetId != "") OR (($spreadsheetId != NULL)))
             {
-                    $base_url = "https://script.google.com/macros/s/AKfycbwTG9nfThBGrZLcGeZ9YWEQ5iRt6HGVrhb3yqvvSSshPj6Kwun_hmlZYlGZmgXgFaVS/exec";    
+                    $base_url = $AppScriptRecord;      
                     $params = [
                         'spreadsheetId' => $spreadsheetId,
                         'data' => json_encode($spreadData), // Convert data to JSON
@@ -340,7 +345,7 @@ function insertSpreadSheetsRecords($links,$spreadsheetId,$data,$queueId,$saveToS
         { 
             if(($spreadsheetId != 0) OR ($spreadsheetId != "") OR (($spreadsheetId != NULL)))
             {
-                    $base_url = "https://script.google.com/macros/s/AKfycbwTG9nfThBGrZLcGeZ9YWEQ5iRt6HGVrhb3yqvvSSshPj6Kwun_hmlZYlGZmgXgFaVS/exec";    
+                    $base_url = $AppScriptRecord;     
                     $params = [
                         'spreadsheetId' => $spreadsheetId,
                         'data' => json_encode($spreadData), // Convert data to JSON

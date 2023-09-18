@@ -46,27 +46,27 @@ if(isset($_POST['startScrapping']))
            {
               $query = $k." ". $l;
               $generateLinks = generateLinks($query);
-             
-              $data['keyword'] = trim($k);  
-              $data['location'] = trim($l);   
+               preTest($generateLinks);  
+              $data['keyword']  = trim($k);    
+              $data['location'] = trim($l);      
               $data['links'] = $generateLinks;    
-
+              
               $linkCounter += count($generateLinks); 
               $linkCounts = $linkCounter;  
-              $queue[] = $data;    
+              $queue[] = $data;         
            }
         }   
-    }   
+    }    
     
-    if($queue)
-    {  
-       $created_at = date('d M,Y');
-       $updated_at = date('d M,Y'); 
+    // if($queue)
+    // {  
+    //    $created_at = date('d M,Y');
+    //    $updated_at = date('d M,Y'); 
      
-       $json = trim(json_encode($queue));     
-       $sql = "INSERT INTO queue SET name='$title',data='$json',link_counts='$linkCounts',created_at='$created_at',updated_at='$updated_at',status=0";   
-       mysqli_query($conn,$sql);            
-    }  
+    //    $json = trim(json_encode($queue));     
+    //    $sql = "INSERT INTO queue SET name='$title',data='$json',link_counts='$linkCounts',created_at='$created_at',updated_at='$updated_at',status=0";   
+    //    mysqli_query($conn,$sql);            
+    // }  
          
 }
 
@@ -136,8 +136,8 @@ if(isset($_POST['startScrapping']))
         </div><br>   
         <div class="row">
             <div class="col-md-6">
-                <?php $defaultKeywords = isset($_POST['keywords']) ? $_POST['keywords'] : "Criminal Attorney\nRestaurant";?> 
-                <?php $defaultLocations = isset($_POST['locations']) ? $_POST['locations'] : "Dallas TX\nLos Angeles California";?>  
+                <?php $defaultKeywords = isset($_POST['keywords']) ? $_POST['keywords'] : "Website Design\nWeb Design\nWeb Developer\nWebsite Developer";?> 
+                <?php $defaultLocations = isset($_POST['locations']) ? $_POST['locations'] : "Los Angeles, CA\nLong Beach, CA\nWhittier, CA\nLa Habra, CA\nSanta Ana, CA\nRosemead, CA";?>     
                 <textarea class="form-control" name="keywords" placeholder="Keywords separated by newline or ','...eg : Criminal Attorney,Restaurant,..." required style="height: 300px;"><?= $defaultKeywords;?></textarea>
             </div>
             <div class="col-md-6"> 

@@ -1,4 +1,33 @@
 <?php
+ob_start();
+session_start();
+error_reporting(0); 
+set_time_limit(0);  
+
+// Check if the application is running on localhost
+$host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
+
+if ($host === 'localhost') {
+    $dbHost = 'localhost';
+    $dbUsername = 'root';
+    $dbPassword = '';
+    $dbName = 'hireageek';
+} else {  
+    // Use live server database configuration
+    $dbHost = 'localhost';
+    $dbUsername = 'root';
+    $dbPassword = '';
+    $dbName = 'hireageek';   
+}      
+
+// Create connection
+$conn = mysqli_connect($dbHost, $dbUsername, $dbPassword,$dbName);
+
+// Check connection
+if (!$conn) {
+  die("Connection failed: " . mysqli_connect_error());
+}     
+//require 'scrapper.php';  
 // Enable error reporting for debugging purposes
 // error_reporting(E_ALL);
 // ini_set('display_errors', 1);
@@ -56,40 +85,27 @@
 
 // print_r($googleSearchCEO);
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;  
-require 'vendor/autoload.php'; // Adjust the path if needed
+function checkBlacklistedLink($link)
+{
+    global $conn;
+   echo $sql = "SELECT id FROM blacklisted WHERE link='$link' OR link LIKE '%$link%'"; 
+   $query = mysqli_query($conn,$sql);  
+   $row = mysqli_fetch_assoc($query);
+   if($row['id'])
+   {
+       echo "Yes";    
+   }else{
+       echo "No";    
+   }
+       
+}
 
-
-    // Create a new PHPMailer instance
-    $mail = new PHPMailer(true); 
-
-    try { 
-        // SMTP server settings 
-        $mail->isSMTP(); 
-        $mail->Host       = "server.hireageekmail.com"; // Your SMTP server
-        $mail->SMTPAuth   = true;       
-        $mail->Username   = "admin"; 
-        $mail->Password   = "o3s3E8ReItpk50W6qtUsNk49uit3y5";    
-        $mail->SMTPSecure = ''; // Enable TLS encryption, or use 'ssl' if needed
-        $mail->Port       = 2525; // SMTP port (587 for TLS, 465 for SSL)
-
-        // Sender and recipient
-        $mail->setFrom("ken@hireageekmail.com", "hireageekmail"); 
-        $mail->addAddress("algobasket@gmail.com", "Algobasket");
-
-        // Email content
-        $mail->isHTML(true);
-        $mail->Subject = "test";
-        $mail->Body    = "test";
-
-        // Send the email
-        $mail->send();
-        return true;
-    } catch (Exception $e) {
-        echo "Message could not be sent. Mailer Error: {$mail->ErrorInfo}";
-        //return false;
-    }
+$link = "https://www.yelp.com/search%3Fcflt%3Dweb_design%26find_loc%3DLong%2BBeach%252C%2BCA&ved=2ahUKEwjJ5fr-7LKBAxUrbmwGHd3KAOYQFnoECAAQAg&usg=AOvVaw2uAvn1PlpvR3Z8vm5HYclq";
+ 
+$parsed_url = parse_url($link);  
+$host = @$parsed_url['host'];
+$host = str_replace('www.','',$host); 
+checkBlacklistedLink($host); 
 ?>
 
 

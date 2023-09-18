@@ -35,7 +35,7 @@ if(isset($_REQUEST))
             $spreadSheetName = preg_replace('/^www\./', '', $domain); 
                
             //$links = auditScrap($lk,$spreadSheetId = 0,$id,$saveToSpreadSheet = 0,$saveToDB = 0,$saveToBothSpreadAndDB = 0);      
-            print_r($lk);                             
+            preTest($lk);                             
             //print_r($links);                             
         }             
     }   

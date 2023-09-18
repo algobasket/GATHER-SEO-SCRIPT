@@ -1237,15 +1237,25 @@ function generateLinks($query)
             $explode = explode('&url=',$href);
             $url = @$explode[1]; 
             if($url) 
-            {
-                $data[] = trim($url);  
+            {   
+                $parsed_url = parse_url($url); 
+                $host = @$parsed_url['host'];
+                $host = str_replace('www.','',$host);
+                $isBlacklisted = checkBlacklistedLink($host);
+                if($isBlacklisted == false)
+                {
+                   $row[] = trim($url);  
+                   //$data  = array_unique($row); 
+                } 
+                //$data[] = trim($url);  
                 unset($explode);  
                 unset($url);  
             }
             
         }
-    }
-    return $data;   
+    } 
+    //return $data;   
+    return $row;       
 }  
 
 
@@ -1699,6 +1709,23 @@ function auditScrap($url,$spreadSheetId,$queueId,$saveToSpreadSheet,$saveToDB,$s
     // JSON decoding was successful, return the decoded data
     return $jsonData;
 }
+
+function isLinkOrDomain($input) {  
+    // Check if the input starts with http:// or https://
+    if (strpos($input, 'http://') === 0 || strpos($input, 'https://') === 0) {
+        $parsed_url = parse_url($input);
+        if (isset($parsed_url['host']) && !empty($parsed_url['host'])) {
+            return str_replace('www.','',$parsed_url['host']); 
+        }
+    } else {
+        // Check if the input is a valid domain host
+        $domainPattern = '/^([a-z0-9-]+\.)*[a-z0-9-]+\.[a-z]{2,}$/i';
+        if (preg_match($domainPattern, $input)) {
+            return str_replace('www.','',$input);    
+        }
+    }
+    return 'Neither Link nor Domain Host';
+} 
 
 function addBgColor($s)      
 {

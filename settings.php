@@ -69,7 +69,7 @@ if(isset($_POST['addEmailTemplate']))
             border:1px solid #fff !important; 
         }
         hr{
-          border:1px solid #000 !important;
+          border:1px solid #000 !important; 
         } 
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script> 
