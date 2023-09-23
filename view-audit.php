@@ -104,31 +104,9 @@ if(isset($_REQUEST))
 
 
    <div class="container">
-         <nav class="navbar navbar-expand-lg bg-body-tertiary navbar-success">
-              <div class="container-fluid">
-                <a class="navbar-brand h1" href="index.php">HIRE A GEEK</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-                  <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-                  <div class="navbar-nav">
-                    <a class="nav-link active h1" aria-current="page" href="index.php">Home</a>
-                     <?php if(@$_SESSION['username']){ ?> 
-                    <a class="nav-link h1" href="audit-ready-to-process.php">Audit Ready To Process</a>
-                    <a class="nav-link h1" href="settings.php?s=email-verify-api">Email Verify API</a>
-                    <a class="nav-link h1" href="settings.php?s=smtp">SMTP Settings</a> 
-                    <a class="nav-link h1" href="settings.php?s=email-templates">Email Template Settings</a>  
-                    <a class="nav-link h1" href="blacklisted.php">Blacklisted</a>  
-               
-                     <a class="nav-link h1" href="auth.php?logout=1">Logout</a> 
-                     <?php }else{ ?> 
-                     <a class="nav-link h1 btn-success" href="auth.php" style="float: right;">Login</a>       
-                     <?php } ?> 
-                    
-                  </div>  
-                </div>
-              </div>
-         </nav>
+        
+        <?php include 'menubar.php';?> 
+
         <br><br><br><br>
         <h1 class="text-center display-2 gfonts text-success">Audit Detail</h1>
         <div class="alert alert-dark">   
@@ -228,17 +206,22 @@ if(isset($_REQUEST))
                  </thead>
                  <tbody>
                  <?php if(is_array($auditData)) : ?>   
-                 <?php $i=1;foreach($auditData as $link) : ?>  
+                 <?php $i=1;foreach($auditData as $link) : ?> 
+                 <?php
+                     $response_time = (@$link['response_time'] != NULL) ? round($link['response_time'],2) : 0;
+                     $load_time = (@$link['response_time'] != NULL) ? round(($link['response_time']+2),2) : 0;
+                     $page_size = (@$link['page_size'] != NULL) ? round(@$link['page_size']/1024,2) . 'kb' : 0;   
+                 ?> 
                  <tr> 
                     <td><?= $i;?></td>
-                    <td><?= substr($link['url'],0,60);?>..</td>  
+                    <td><?= substr($link['url'],0,60);?>..</td>   
                     <td><?= $link['depth'];?></td>    
                     <td><?= $link['score'];?></td>
                     <td><?= $link['ganalytics_status'];?></td> 
                     <td><?= $link['ganalytics_match'];?></td>
-                    <td><?= round($link['response_time'],2);?> S</td> 
-                    <td><?= round(($link['response_time']+2),2);?> S</td> 
-                    <td><?= round($link['page_size']/1024,2) . 'kb';?></td>    
+                    <td><?= $response_time;?></td> 
+                    <td><?= $load_time;?></td> 
+                    <td><?= $page_size;?></td>    
                     <td class="<?= addBgColor($link['ssl_status']);?>"><?= $link['ssl_status'];?></td>     
                     <td class="<?= addBgColor($link['h1_in_title']);?>"><?= $link['h1_in_title'];?></td>    
                     <td class="<?= tdColorStatus($link['meta_description'],'Meta-Description');?>"><?= $link['meta_description'] ? $link['meta_description'] : "Empty";?></td> 

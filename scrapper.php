@@ -24,8 +24,30 @@ function getCurlContent($url)
   $data = curl_exec($ch);
 
   curl_close($ch);
-  return $data;
-} 
+  return $data;    
+}  
+
+//Using Proxy     
+// function getCurlContent($url) { 
+//     $ch = curl_init();
+//     curl_setopt($ch, CURLOPT_URL, $url);
+//     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+//     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+//     curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36");
+    
+//     $proxy = '5.79.66.2';  
+//     $proxyPort = '13150'; 
+//     // Set proxy if provided 
+//     if ($proxy && $proxyPort) { 
+//         curl_setopt($ch, CURLOPT_PROXY, $proxy);
+//         curl_setopt($ch, CURLOPT_PROXYPORT, $proxyPort);
+//     }
+
+//     $data = curl_exec($ch);
+//     curl_close($ch);
+
+//     return $data;
+// }
 
 
 // CURL function to get site content and info 
@@ -154,6 +176,35 @@ function googleSearchEmail($query)
       }
     return $data;    
 } 
+
+
+function googleSearchOwnersAndCEOs($query) {    
+  $url = "https://www.google.com/search?q=" . urlencode($query);
+    $response = getCurlContent($url);   
+    $res = preg_match_all(
+        '/<h3 class="t[^>]*">[^<]*<a href="[^"]*"[^>]*>([^<]*)<\/a><\/h3>[^<]*<div class="s">([^<]*)<\/div>/i',
+        $response,
+        $matches,
+        PREG_SET_ORDER
+    ); 
+
+    $results = [];   
+
+    if ($res) {
+        foreach ($matches as $match) {
+            $title = strip_tags($match[1]);  // Remove HTML tags from the title
+            $description = strip_tags($match[2]);  // Remove HTML tags from the description
+            $results[] = [
+                'title' => $title,
+                'description' => $description,
+            ];
+        }
+    } else {
+        return 0;
+    } 
+
+    return $response;    
+}
 
 
 
@@ -729,7 +780,7 @@ function getHTagsLength($html,$number)
      }else{
         return 0;
      } 
-}
+} 
 
 
 
@@ -888,7 +939,8 @@ function getPhoneNumbers($html)
 // } 
 
 
-function getAllOutboundLinks($html, $url) {
+function getAllOutboundLinks($html, $url) 
+{
     // Create a DOMDocument object
     $dom = new DOMDocument();
 
@@ -927,6 +979,8 @@ function getAllOutboundLinks($html, $url) {
 
     return ['outBoundlinks' => $outboundLinks, 'outBoundlinksCount' => count($outboundLinks)];
 }
+
+
 
 
 function getAllBrokenLinks($html,$url) 
@@ -972,6 +1026,8 @@ function getAllBrokenLinks($html,$url)
 }
 
 
+
+
 // Function to resolve relative URLs to absolute URLs
 function resolveURL($href, $baseURL)
 {
@@ -983,6 +1039,9 @@ function resolveURL($href, $baseURL)
     // Use PHP's built-in function to resolve relative URLs to absolute URLs
     return rtrim($baseURL, '/') . '/' . ltrim($href, '/');
 } 
+
+
+
 
 
 function getXmlSitemapAndRobotsTxtLinks($siteUrl)     
@@ -1041,6 +1100,8 @@ function getXmlSitemapAndRobotsTxtLinks($siteUrl)
 
 
 
+
+
 function siteBigramCount($html) {
     // Remove script and style tags and trim whitespace
     $text = preg_replace('/<script\b[^>]*>[\s\S]*?<\/script>|<style\b[^>]*>[\s\S]*?<\/style>|<[^>]*>/', ' ', $html);
@@ -1082,6 +1143,9 @@ function siteBigramCount($html) {
 
     return $join;
 }
+
+
+
 
 
 
@@ -1128,6 +1192,8 @@ function siteTrigramCount($html) {
 
 
 
+
+
 function siteFourWordCombinationCount($html) {
     // Remove script and style tags and trim whitespace
     $text = preg_replace('/<script\b[^>]*>[\s\S]*?<\/script>|<style\b[^>]*>[\s\S]*?<\/style>|<[^>]*>/', ' ', $html);
@@ -1166,6 +1232,9 @@ function siteFourWordCombinationCount($html) {
     }  
      return $join;  
 }
+
+
+
 
 
 
@@ -1210,6 +1279,9 @@ function siteFiveWordCombinationCount($html) {
 
 
 
+
+
+
 function generateLinks($query)
 {
     $html = googleSearchForPpcAdvertise($query);
@@ -1240,12 +1312,28 @@ function generateLinks($query)
             {   
                 $parsed_url = parse_url($url); 
                 $host = @$parsed_url['host'];
+                $scheme = @$parsed_url["scheme"];
+
+                $domain_url = $scheme . "://" . $host;
+
                 $host = str_replace('www.','',$host);
-                $isBlacklisted = checkBlacklistedLink($host);
+                
+               
+                $parts = explode('.', $host);
+
+                // Check if there are at least two parts (subdomain and domain)
+                if (count($parts) >= 2) 
+                {
+                    // Get the last two parts to form the root domain
+                    $domain = $parts[count($parts) - 2] . '.' . $parts[count($parts) - 1];
+                }
+
+
+                $isBlacklisted = checkBlacklistedLink($domain); 
                 if($isBlacklisted == false)
                 {
-                   $row[] = trim($url);  
-                   //$data  = array_unique($row); 
+                   $row[] = trim($domain_url);          
+                   $data  = array_unique($row); 
                 } 
                 //$data[] = trim($url);  
                 unset($explode);  
@@ -1253,32 +1341,47 @@ function generateLinks($query)
             }
             
         }
-    } 
-    //return $data;   
-    return $row;       
+    }  
+    return $data;    
+    //return $row;         
 }  
+
+
+
+
 
 
 function linkCounts($links) 
 {
    $totalLinks = 0;
-        foreach ($links as $linkArray) {
+        foreach ($links as $linkArray) 
+        {
             $totalLinks += count($linkArray);
         }
    return $totalLinks;
-}
+}  
+
+
+
 
 
 function isBase64Encoded($string) 
 { 
     return base64_encode(base64_decode($string)) === $string;
-}
+} 
 
 
 
-function auditScrap($url,$spreadSheetId,$queueId,$saveToSpreadSheet,$saveToDB,$saveToBothSpreadAndDB)   
+
+
+function auditScrap($url,$spreadSheetId,$queueId,$saveToSpreadSheet,$saveToDB,$saveToBothSpreadAndDB,$limit)   
 {  
-      //$links = 0; 
+     $links = ""; 
+     $dom = "";
+     $data = "";
+     $getCurlPageInfo = "";
+     $data = "";    
+
     if(isBase64Encoded($url) == true)
     {
 
@@ -1288,22 +1391,22 @@ function auditScrap($url,$spreadSheetId,$queueId,$saveToSpreadSheet,$saveToDB,$s
 
       $link =  $url;
 
-    }     
+    }      
     
     $start_time = microtime(true);
     $html = getCurlPageInfo($link);
     $end_time = microtime(true);
     $load_time = $end_time - $start_time;      
     $dom = new DOMDocument;
-    @$dom->loadHTML($html['data']);  
-    $links = array();  
-    $counter = 1; 
-    $arrayHref = $dom->getElementsByTagName('a');
+    @$dom->loadHTML($html['data']);   
+    $links = array();   
+    $counter = 1;  
+    $arrayHref = $dom->getElementsByTagName('a'); 
      //echo "test1";
     if(isset($arrayHref))    
     {
           //echo "test2"; 
-           foreach ($arrayHref as $a)
+           foreach ($arrayHref as $a) 
            {
 
                     $href = $a->getAttribute('href');  
@@ -1336,7 +1439,7 @@ function auditScrap($url,$spreadSheetId,$queueId,$saveToSpreadSheet,$saveToDB,$s
                                 $getMetaDescription = 0;
                                 if($getCurlPage2)
                                 {
-                                    $getMetaDescription = getMetaDescription($getCurlPage2);
+                                    $getMetaDescription = str_replace("'","",getMetaDescription($getCurlPage2));
                                 }
                                 
                                 $canonicalLink = 0;
@@ -1437,7 +1540,8 @@ function auditScrap($url,$spreadSheetId,$queueId,$saveToSpreadSheet,$saveToDB,$s
                                 }  
                                 
                                 
-                                $headings = $h1_h.$h2_h.$h3_h.$h4_h.$h5_h.$h6_h; 
+                                $headings = str_replace("'",'',$h1_h.$h2_h.$h3_h.$h4_h.$h5_h.$h6_h);
+                                $headings = htmlspecialchars($headings, ENT_QUOTES, 'UTF-8');        
                                 
                                // Count the number of <img> elements in the HTML
                                 $image_count = countImages($getCurlPage2);
@@ -1588,10 +1692,10 @@ function auditScrap($url,$spreadSheetId,$queueId,$saveToSpreadSheet,$saveToDB,$s
                                 } 
 
 
-                                $twoWords = siteBigramCount($getCurlPage2);         
-                                $threeWords = siteTrigramCount($getCurlPage2);          
-                                $fourWords = siteFourWordCombinationCount($getCurlPage2);         
-                                $fiveWords = siteFiveWordCombinationCount($getCurlPage2);
+                                $twoWords = str_replace("'","",siteBigramCount($getCurlPage2));         
+                                $threeWords = str_replace("'","",siteTrigramCount($getCurlPage2));          
+                                $fourWords = str_replace("'","",siteFourWordCombinationCount($getCurlPage2));         
+                                $fiveWords = str_replace("'","",siteFiveWordCombinationCount($getCurlPage2)); 
 
                                    $response_time = $getCurlPage1['total_time'];
                                    if($response_time > 3){ $pageScore += 1; };
@@ -1668,27 +1772,38 @@ function auditScrap($url,$spreadSheetId,$queueId,$saveToSpreadSheet,$saveToDB,$s
                                     
                                    $links[] = $data;  
 
-                                    if($counter == 5)   
+                                    if($counter == $limit)       
                                     {
-                                        break;                       
-                                    }     
+                                        break;                                             
+                                    }
+                                    if($counter == 10)       
+                                    {
+                                        sleep(1);                                              
+                                    }                        
                                     $counter++;             
                                        //echo '<pre>';print_r($links);echo '</pre>';        
                                        //print_r($getCurlPageInfo['info']);          
-                                       //exit;                               
+                                       //exit;                                
                     }     
     
-    
-           } // end-foreach 
-
+           } // end-foreach  
+     
+     unset($dom);
+     unset($data);
+     unset($getCurlPageInfo);
+     unset($data);             
+     sleep(1); 
      return $links;
     } // end-if       
-}
+}  
 
 
 
 
- function safeJsonDecode($jsonString) { 
+
+
+ function safeJsonDecode($jsonString) 
+ { 
     // Trim leading and trailing whitespaces
     $jsonString = trim($jsonString);
 
@@ -1710,7 +1825,11 @@ function auditScrap($url,$spreadSheetId,$queueId,$saveToSpreadSheet,$saveToDB,$s
     return $jsonData;
 }
 
-function isLinkOrDomain($input) {  
+
+
+
+function isLinkOrDomain($input) 
+{  
     // Check if the input starts with http:// or https://
     if (strpos($input, 'http://') === 0 || strpos($input, 'https://') === 0) {
         $parsed_url = parse_url($input);
@@ -1727,11 +1846,14 @@ function isLinkOrDomain($input) {
     return 'Neither Link nor Domain Host';
 } 
 
+
+
+
 function addBgColor($s)      
 {
    if($s >= 1)   
    {
-      $class =  "tdOk";
+      $class =  "tdOk";  
    }elseif($s == 0){  
      $class = "tdErr";
    }elseif($s == "OK"){
@@ -1742,15 +1864,22 @@ function addBgColor($s)
      $class = "tdOk";  
    }elseif($s == "Yes"){
      $class = "tdOk";  
-   }elseif($s == "No"){ 
+   }elseif($s == "YES"){
+     $class = "tdOk";  
+   }elseif($s == "No"){  
      $class = "tdErr";  
    }elseif($s == "yes"){
      $class = "tdOk";  
    }elseif($s == "no"){ 
      $class = "tdErr";   
-   }    
+   }elseif($s == "NO"){ 
+     $class = "tdErr";   
+   }      
    return $class;  
 }
+
+
+
 
 function tdColorStatus($s,$name)  
 { 
@@ -1944,10 +2073,21 @@ function tdColorStatus($s,$name)
          $class = "tdErr";
       }
    }               
-
-   
    return $class;     
-}       
+} 
+
+
+function bS($status)  
+{
+  if($status == 1 ) 
+  {
+     $class =  "<b class='text-success'>YES</b>";
+  }else{ 
+     $class =  "<b class='text-danger'>NO</b>"; 
+  }
+  return $class;
+}
+
 
 function preTest($data) 
 {
@@ -1956,6 +2096,14 @@ function preTest($data)
   echo '</pre>';
 }
 
+ 
+function getBusinessNameFromLink($lk)  
+{
+    $parsed_url = parse_url($lk); 
+    $domain = $parsed_url['host'];
+    $name = preg_replace('/^www\./', '', $domain);
+    return $name;   
+}
 
 function removeQueryString($url)  
 {

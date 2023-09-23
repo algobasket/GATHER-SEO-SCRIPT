@@ -17,26 +17,32 @@ if(isset($_GET['q']))
 {
     $id = $_GET['q'];    
     $queue = getQueueInfoById($id);   
-    $data = $queue['data'];    
+    $data = $queue['data2'];    
     $decode = safeJsonDecode($data);        
     foreach($decode as $r) 
     { 
-        $linksArray = $r['links'];
-        $firstLink =  $linksArray[0];
+        //$linksArray = $r['links'];
+        $firstLink =  $r;
         $getEmailQueueData = getEmailQueueData($firstLink);     
         $email = $getEmailQueueData['email'];
         $domain = $getEmailQueueData['domain'];
         $subject = $getEmailQueueData['subject']; 
         $owner_ceo_name = $getEmailQueueData['owner_ceo_name'];  
         $emailTemplate = $getEmailQueueData['emailTemplate'];
-        foreach($linksArray as $lk)
-        {   
-            $parsed_url = parse_url($lk); 
-            $host = $parsed_url['host']; 
-            $links[] = ['domain' => $host,'url' => $lk];       
-        }            
-    }   
+        // foreach($linksArray as $lk)
+        // {   
+        //     $parsed_url = parse_url($lk); 
+        //     $host = $parsed_url['host']; 
+        //     $links[] = ['domain' => $host,'url' => $lk];       
+        // }    
+
+         $parsed_url = parse_url($firstLink); 
+         $host = $parsed_url['host']; 
+         $links[] = ['domain' => $host,'url' => $firstLink];          
+    }
+    //preTest($links);     
 } 
+
  if(@$_GET['operation'] == 'blacklist')  
 {
   $domain = $_GET['host']; 
@@ -50,6 +56,15 @@ if(isset($_GET['q']))
   }    
   header('location:email.php?q='.$_GET['q']);
   exit;        
+}
+
+if(@$_GET['femail'] == 2)
+{
+    $parsed_url = parse_url($url); 
+    $host   = @$parsed_url['host'];
+    $host = str_replace('www.','',$host);
+    $generateEmailPermutations = generateEmailPermutations($fullname,$host);
+   print_r($generateEmailPermutations);exit;  
 }      
 ?>   
 <!doctype html>
@@ -89,31 +104,9 @@ if(isset($_GET['q']))
   
    <div class="container">
 
-    <nav class="navbar navbar-expand-lg bg-body-tertiary navbar-success">
-              <div class="container-fluid">
-                <a class="navbar-brand h1" href="index.php">HIRE A GEEK</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-                  <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-                  <div class="navbar-nav">
-                    <a class="nav-link active h1" aria-current="page" href="index.php">Home</a>
-                     <?php if(@$_SESSION['username']){ ?> 
-                    <a class="nav-link h1" href="audit-ready-to-process.php">Audit Ready To Process</a>
-                    <a class="nav-link h1" href="settings.php?s=email-verify-api">Email Verify API</a>
-                    <a class="nav-link h1" href="settings.php?s=smtp">SMTP Settings</a> 
-                    <a class="nav-link h1" href="settings.php?s=email-templates">Email Template Settings</a>  
-                    <a class="nav-link h1" href="blacklisted.php">Blacklisted</a>  
-               
-                     <a class="nav-link h1" href="auth.php?logout=1">Logout</a> 
-                     <?php }else{ ?> 
-                     <a class="nav-link h1 btn-success" href="auth.php" style="float: right;">Login</a>       
-                     <?php } ?> 
-                    
-                  </div>  
-                </div>
-              </div>
-         </nav>
+    
+   <?php include 'menubar.php';?>  
+
    <?php  $qInfoById = getQueueInfoById($_GET['q']);?>   
    <center>
         <br><br><br><br><br><br>
@@ -122,7 +115,7 @@ if(isset($_GET['q']))
       
         <table class="table table-bordered">    
             <tr>
-                <td><input type="text" class="form-control" name="url" placeholder="URL" value="<?= $firstLink;?>" required></td>
+                <td><input type="text" class="form-control website" name="url" placeholder="URL" value="<?= $firstLink;?>" required></td>
                 <td style="width: 20px;">
                      <?php
                        $parsed_url3 = parse_url($firstLink); 
@@ -152,7 +145,72 @@ if(isset($_GET['q']))
                 <td><a href=""></a></td>
             </tr> 
             <tr>   
-                <td><input type="text" class="form-control isEmailReal" name="email" placeholder="Email" value="<?= $email;?>" required></td> 
+                <td>
+                    <input type="text" class="form-control isEmailReal" name="email" placeholder="Email" value="<?= $email;?>" required />
+                    <div class="row">
+                        <div class="btn-group">  
+                           <a href="email.php?q=<?= $_GET['q'];?>&femail=1" class="btn btn-outline-dark btn-sm">Cross Site Found</a>   
+                           <a href="email.php?q=<?= $_GET['q'];?>&femail=2" data-name="" class="btn btn-outline-dark btn-sm emailPermutation">Email Permutation</a>    
+                        </div>
+                    </div>
+                    <?php if(@$_GET['femail'] == 1) : ?>
+                        <table class="table table-sm table-primary"> 
+                            <tr>
+                                <th colspan="3" class="text-center">See Related Emails</th>
+                            </tr>
+                             <tr>
+                                <th>Source</th>
+                                <th>Email</th>
+                                <th>Select</th>
+                            </tr>
+                            <tr>
+                                <td>Found From Contact Page - </td>
+                                <td>errrr.com</td> 
+                                <td><input type="radio" value="errrr.com" name="chooseEmail"></td>
+                            </tr>
+                            <tr>
+                                <td>Found From Google - </td>
+                                <td>errrr.com</td>
+                                <td><input type="radio" value="errrr.com" name="chooseEmail"></td>
+                            </tr>
+                            <tr>
+                                <td>Found From Facebook - </td>
+                                <td>errrr.com</td>
+                                <td><input type="radio" value="errrr.com" name="chooseEmail"></td>
+                            </tr>
+                            <tr>
+                                <td>Found From Linkedin - </td>
+                                <td>errrr.com</td>
+                                <td><input type="radio" value="errrr.com" name="chooseEmail"></td>
+                            </tr>
+                            <tr>
+                                <td>Found From Govt Database - </td>
+                                <td>errrr.com</td>
+                                <td><input type="radio" value="errrr.com" name="chooseEmail"></td>
+                            </tr>
+                            <tr>
+                                <th colspan="3" class="text-center">See More</th>
+                            </tr>
+                        </table>
+                    <?php endif ?>
+                    <?php if(@$_GET['femail'] == 2) : ?>
+                        <table class="table table-sm table-primary"> 
+                            <tr>
+                                <th colspan="3" class="text-center">All Possible Permutations</th>
+                            </tr>
+                             <tr>
+                                <th>Source</th>
+                                <th>Email</th>
+                                <th>Select</th> 
+                            </tr>
+                            <tr>
+                                <td>Mailmeteor.com API - </td>
+                                <td>errrr.com</td> 
+                                <td><input type="radio" value="errrr.com" name="chooseEmail"></td>
+                            </tr>
+                        </table>
+                    <?php endif ?>
+                </td> 
                 <td style="width: 20px;">
                     <a href="javascript:void(0)" class="btn btn-success verify-email"><i class="bi bi-envelope"></i></a>
                 </td>  
@@ -172,7 +230,7 @@ if(isset($_GET['q']))
                 <td>
                     <a href="javascript:void(0)" class="btn btn-outline-dark emailqueue" name="emailqueue">Email Queue</a>
                     <a href="javascript:void(0)" class="btn btn-outline-dark emailnow" name="emailnow">Email Now</a> 
-                    <span class="emailSentStatus"></span> 
+                    <span class="emailSentStatus"></span>    
                 </td> 
                 <td></td> 
                 <td><a href="" class="btn btn-outline-dark copyEmailTemp">Copy</a></td>    
@@ -196,7 +254,7 @@ if(isset($_GET['q']))
                     $host2 = $parsed_url2['host']; 
                    ?>    
                     <tr>
-                        <td><?= removeQueryString($link['url']);?></td> 
+                        <td><?= $link['url'];?></td>   
                         <?php if(checkBlacklistedLink($host2)){ ?>
                            <td style="width: 20px;"> 
                                 <a href="javascript:void(0)" data-delete="email.php?q=<?= $_GET['q'];?>&operation=blacklist&host=<?= $host2;?>&whitelist=1" data-title="Whitelist" data-msg="Do you want to whitelist this link ?" class="btn btn-danger btn-sm openModal">  
@@ -292,7 +350,8 @@ if(isset($_GET['q']))
            var email  = $('.isEmailReal').val();
            var name   = $('.fullname').val();
            var subject   = $('.subject').val();
-           var template   = $('.copy-link').val();  
+           var template   = $('.copy-link').val();
+           var website   = $('.website').val();  
            if(email && name && template)
            {    
                $('.emailSentStatus').html('<img src="./icons/loading.gif" style="width:70px;height:50px;position:absolute"/>');
@@ -302,6 +361,7 @@ if(isset($_GET['q']))
                  template : template, 
                  subject : subject,
                  queue_instant : "queue", 
+                 website : website,
                  emailSentAjax : 1 
                }; 
                $.ajax({
@@ -318,10 +378,11 @@ if(isset($_GET['q']))
 
          $('.emailnow').click(function(){     
             
-           var email  = $('.isEmailReal').val();
-           var name   = $('.fullname').val();
+           var email     = $('.isEmailReal').val();
+           var name      = $('.fullname').val();
            var subject   = $('.subject').val();
-           var template   = $('.copy-link').val();  
+           var template  = $('.copy-link').val();  
+           var website   = $('.website').val();  
            if(email && name && template)
            {    
                $('.emailSentStatus').html('<img src="./icons/loading.gif" style="width:70px;height:50px;position:absolute"/>');
@@ -329,21 +390,27 @@ if(isset($_GET['q']))
                  email_to : email,
                  name : name,
                  template : template,
-                 subject : subject, 
+                 subject : subject,  
                  queue_instant : "instant", 
+                 website : website,  
                  emailSentAjax : 1  
                }; 
                $.ajax({
                  method:'POST',
                  url:'ajax.php', 
                  data:data,
-                 success:function(response){ 
+                 success:function(response){      
                     $('.emailSentStatus').html(response).show(); 
                     console.log(response);  
                  }
                });
            }
         });
+
+      $('.emailPermutation').click(function(){
+         
+      });     
+
     });   
 
     function copyLink()

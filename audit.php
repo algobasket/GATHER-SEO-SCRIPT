@@ -18,26 +18,22 @@ if(isset($_REQUEST))
 { 
 
     //$url = $_REQUEST['link'];  
-    $id  = 18;     
-    //$id  = $_REQUEST['id'];     
+    //$id  = 18;     
+    $id  = $_REQUEST['id'];     
     
     $queue = getQueueInfoById($id); 
-    $data = $queue['data'];
+    $data = $queue['data2'];
     $decode = safeJsonDecode($data);  
     //preTest($decode);exit;           
     foreach($decode as $r)    
     {
-        $linksArray = $r['links']; 
-        foreach($linksArray as $lk)
-        {   
+            $lk = $r;   
             $parsed_url = parse_url($lk); 
             $domain = $parsed_url['host'];
             $spreadSheetName = preg_replace('/^www\./', '', $domain); 
-               
-            //$links = auditScrap($lk,$spreadSheetId = 0,$id,$saveToSpreadSheet = 0,$saveToDB = 0,$saveToBothSpreadAndDB = 0);      
-            preTest($lk);                             
-            //print_r($links);                             
-        }             
+            $links = auditScrap($lk,$spreadSheetId = 0,$id,$saveToSpreadSheet = 0,$saveToDB = 0,$saveToBothSpreadAndDB = 0,$limit = 50);                                 
+            preTest($links);                                     
+                   
     }   
 };
 exit;
@@ -84,31 +80,9 @@ exit;
 
 
    <div class="container-fluid">
-         <nav class="navbar navbar-expand-lg bg-body-tertiary navbar-success">
-              <div class="container-fluid">
-                <a class="navbar-brand h1" href="index.php">HIRE A GEEK</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-                  <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-                  <div class="navbar-nav">
-                    <a class="nav-link active h1" aria-current="page" href="index.php">Home</a>
-                     <?php if(@$_SESSION['username']){ ?> 
-                    <a class="nav-link h1" href="audit-ready-to-process.php">Audit Ready To Process</a>
-                    <a class="nav-link h1" href="settings.php?s=email-verify-api">Email Verify API</a>
-                    <a class="nav-link h1" href="settings.php?s=smtp">SMTP Settings</a> 
-                    <a class="nav-link h1" href="settings.php?s=email-templates">Email Template Settings</a>  
-                    <a class="nav-link h1" href="blacklisted.php">Blacklisted</a>  
-               
-                     <a class="nav-link h1" href="auth.php?logout=1">Logout</a> 
-                     <?php }else{ ?> 
-                     <a class="nav-link h1 btn-success" href="auth.php" style="float: right;">Login</a>       
-                     <?php } ?> 
-                    
-                  </div>  
-                </div>
-              </div>
-         </nav>
+         
+        <?php include 'menubar.php';?> 
+
         <br><br><br><br>
         <h1>HIRE A GEEK | SEO SCRIPT</h1>
         <div class="alert alert-dark">   

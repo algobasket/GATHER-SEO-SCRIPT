@@ -13,8 +13,8 @@
  require 'config.php';  
 
 
-if(isset($_REQUEST['isEmailValidAjax'])) 
-{
+if(isset($_REQUEST['isEmailValidAjax']))  
+{ 
 
     $email = urlencode($_POST['email']); // Replace with the email you want to verify
     $key = 'c2GhwlMQ5COEZLFXhyDq2Wml10dQDlTh'; // Replace with your Reoon API key
@@ -50,35 +50,78 @@ if(isset($_REQUEST['isEmailValidAjax']))
          echo '<button class="btn btn-warning btn-sm">'.ucfirst($status).'</button>';     
      }   
        // All Status: "safe", "invalid", "disabled", "disposable", "inbox_full", "catch_all", "role_account", "spamtrap", "unknown"
-}
+} 
+
+
 
 
 if(isset($_POST['emailSentAjax']))
-{
-    $email_to = $_POST['email_to'];
-    $name = $_POST['name']; 
-    $subject = $_POST['subject'];
-    $template = $_POST['template'];  
+{ 
+    $email_to = $_POST['email_to'];  
+    $name     = $_POST['name'];  
+    $subject  = $_POST['subject'];   
+    $template = $_POST['template'];      
+    $website  = $_POST['website'];      
 
-    $queue_instant = $_POST['queue_instant'];
-    $date = date('d-m-Y h:i:s'); 
+    $queue_instant = $_POST['queue_instant']; 
+    $date = date('d-m-Y');
 
-    if($queue_instant == "instant")    
+    $out = getEmailSentCount($email_to,$website);
+
+    $getNextDate = getNextEmailDate($email_to,$website); 
+
+    if($out == 0)
     {
-         triggerEmailApi($email_to,$name,$subject,$template);
-        $is_sent = 1;
-        $response  = "<span class='badge badge-success'>Email Sent</span>";   
+       $next_date = date('d-m-Y', strtotime($date . ' +7 days'));
     }
-    if($queue_instant == "queue") 
+    if($out == 1)
     {
-        $is_sent = 0;
-        $response  = "<span class='badge badge-success'>Email Queued</span>";     
+       $next_date = date('d-m-Y', strtotime($date . ' +14 days'));
+    } 
+    if($out == 2)
+    {
+       $next_date = date('d-m-Y', strtotime($date . ' +30 days'));
+    }
+    if($out == 3)
+    {
+       $next_date = 0;
     }         
-        $sql = "INSERT INTO emails SET email_to='$email_to',email_data='$template',is_sent='$is_sent',queue_instant='$queue_instant',sent_date='',created_at='$date',updated_at='$date',status=1";
-         mysqli_query($conn,$sql);
 
-        echo $response;               
+
+     if($out <= 3)
+    {     
+         if($queue_instant == "instant")      
+        {  
+             triggerEmailApi($email_to,$name,$subject,$template);
+            $is_sent   = 1;  
+            $sent_date = date('d-m-Y'); 
+            $response  = "<span class='text-success'>Email Sent</span>";     
+        }       
+
+        if($queue_instant == "queue") 
+        {  
+            $is_sent   = 0;   
+            $sent_date = "";        
+            $response  = "<span class='text-success'>Email Queued</span>";             
+        } 
+         $sql = "INSERT INTO emails SET email_to='$email_to',email_data='$template',is_sent='$is_sent',owner = '$name',link='$website',subject='$subject'".      
+                ",queue_instant='$queue_instant',next_date='$next_date',sent_date='$sent_date',created_at='$date',updated_at='$date',status=0";     
+
+         mysqli_query($conn,$sql);          
+         
+    }else{
+        $response  = "<span class='text-danger'>Already Sent 4 times</span>";   
+    }    
+    echo $response; 
+                              
 }
+
+
+if(isset($_POST['emailPermutationAjax']))
+{ 
+    $name = $_POST['fullName'];
+    
+}      
 
 
 ?>

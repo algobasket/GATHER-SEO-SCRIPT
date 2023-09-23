@@ -69,32 +69,7 @@ if(isset($_POST['submitForBlacklist']))
   
    <div class="container">
 
-     <nav class="navbar navbar-expand-lg bg-body-tertiary navbar-success">
-              <div class="container-fluid">
-                <a class="navbar-brand h1" href="index.php">HIRE A GEEK</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-                  <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-                  <div class="navbar-nav">
-                    <a class="nav-link active h1" aria-current="page" href="index.php">Home</a>
-                     <?php if(@$_SESSION['username']){ ?> 
-                    <a class="nav-link h1" href="audit-ready-to-process.php">Audit Ready To Process</a>
-                    <a class="nav-link h1" href="settings.php?s=email-verify-api">Email Verify API</a>
-                    <a class="nav-link h1" href="settings.php?s=smtp">SMTP Settings</a> 
-                    <a class="nav-link h1" href="settings.php?s=email-templates">Email Template Settings</a>  
-                    <a class="nav-link h1" href="blacklisted.php">Blacklisted</a>   
-                    
-               
-                     <a class="nav-link h1" href="auth.php?logout=1">Logout</a> 
-                     <?php }else{ ?> 
-                     <a class="nav-link h1 btn-success" href="auth.php" style="float: right;">Login</a>         
-                     <?php } ?> 
-                    
-                  </div>  
-                </div>
-              </div>
-         </nav>
+    <?php include 'menubar.php';?> 
 
    <center>
         <br><br><br><br><br><br>
@@ -120,9 +95,9 @@ if(isset($_POST['submitForBlacklist']))
              <th>Blacklisted Date</th>
              <th>Whitelist Date</th>
              <th></th>
-           </tr>            
-           <?php foreach($getBlacklistLink as $q) : ?> 
+           </tr>             
            
+           <?php foreach($getBlacklistLink as $q) : ?> 
            <tr>   
                <td style="cursor: pointer;"><b><?= $q['link'];?></b></td>  
                <td style="cursor: pointer;"><?= ($q['queue_id'] == 0) ? "<b class='text-success'>Blacklisted Manually</b>" :"<b class='text-danger'>Blacklisted Through Links</b>"  ;?></td>  
@@ -131,7 +106,9 @@ if(isset($_POST['submitForBlacklist']))
                <td style="width:50px;"><a href="javascript:void(0)" data-delete="blacklisted.php?id=<?= $q['id'];?>&operation=delete&link=<?= $q['link'];?>" data-title="Whitelist" data-msg="Do you want to whitelist this link/domain ?" class="btn btn-dark btn-sm openModal"><i class="bi bi-trash3-fill"></i></a></td>    
                <td style="width:50px;"><a href="view-audit.php?link=<?= $q['link'];?>" class="btn btn-success btn-sm"><i class="bi bi-search"></i></a></td>      
            </tr> 
-           <?php endforeach ?> 
+           <?php endforeach ?>  
+
+
        </table>     
         
         <br><hr> 

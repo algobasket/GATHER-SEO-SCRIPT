@@ -11,12 +11,39 @@
   5. Website URL    
 */  
 require 'config.php';     
-require 'scrapper.php';
+require 'scrapper.php'; 
+
+
+$getEmailSent = getEmailSent($isSent = null,$queueInstant = null);    
+
  if(@$_GET['operation'] == 'delete') 
 {
-  deleteQueue($_GET['id']); 
-  header('location:audit-ready-to-process.php');
+  $link = $_GET['link'];
+  whitelistLink(0,$link);    
+  header('location:blacklisted.php');  
   exit;       
+}
+
+ if(isset($_GET['reply'])) 
+{
+  $isReply = $_GET['reply']; 
+  $email = $_GET['email'];
+  $link  = $_GET['link'];   
+  replyStatus($isReply,$email,$link);      
+  header('location:waitinglist.php');   
+  exit;       
+}
+
+if(isset($_POST['submitForBlacklist']))
+{
+   $link = $_POST['link'];
+   $q = 0; 
+  
+   $domain = isLinkOrDomain($link);
+
+   blacklistLink($q,$domain);    
+   header('location:blacklisted.php');  
+   exit;     
 }         
 ?>   
 <!doctype html>
@@ -28,43 +55,73 @@ require 'scrapper.php';
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Bungee Spice|Silkscreen">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css" integrity="sha384-b6lVK+yci+bfDmaY1u0zE8YYJt0TZxLEAFyYSLHId4xoVvsrQu3INevFKo+Xir8e" crossorigin="anonymous"> 
-    <style type="text/css"> 
-         input[type="text"],textarea[name="locations"],textarea[name="keywords"],tr{   
-            border:1px solid #000;
-            border-radius: 0;
+    <style type="text/css">
+         input[type="text"]{      
+            border:1px solid #000 !important;
+            border-radius: 0 !important;
+        }
+        tr{
+          border-bottom: 1px solid #fff !important; 
+        }
+        hr{
+          border:1px solid #000 !important; 
+        }
+        .borderTable > tbody > tr {   
+           border: 1px solid #000 !important; 
         } 
-    </style> 
+        .borderTable > tbody > tr > td{   
+           border-left: 1px solid #000 !important; 
+        } 
+    </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script> 
   </head>
   <body class="bg-light text-success">  
   
    <div class="container">
 
-     <?php include 'menubar.php';?> 
+    <?php include 'menubar.php';?> 
 
    <center>
         <br><br><br><br><br><br>
-        <h1 class="text-center display-2 gfonts">AUDIT</h1>  
-        
-       <hr>
+        <h1 class="text-center display-2 gfonts">Waiting List</h1>   
+
+       <hr><br>
       
-       <?php $queueList = queueListByStatus(0);?>  
-       <table class="table table-bordered table-hover"> 
-           <?php foreach($queueList as $q) : ?> 
-           <tr>    
-                 <td onclick="window.location.href='email.php?q=<?= $q['id'];?>'" style="cursor: pointer;"><?= strtoupper($q['name']);?></td> 
-                 <td>
-                     <b><?= $q['link_counts'];?><b>
-                 </td>    
-                 <td style="width:50px;">
-                  <a href="javascript:void(0)" data-delete="audit-ready-to-process.php?id=<?= $q['id'];?>&operation=delete" data-title="Delete" data-msg="Do you want to delete it ?" class="btn btn-dark btn-sm openModal"><i class="bi bi-trash3-fill"></i></a>
-                </td>  
-                <td style="width:50px;"><a href="email.php?q=<?= $q['id'];?>" class="btn btn-success btn-sm"><i class="bi bi-search"></i></a></td>     
-           </tr>
-       <?php endforeach ?> 
-       </table>
-        
-        <br><hr>
+       <table class="table table-hover borderTable"> 
+          <tr>
+             <th>Website</th>
+             <th>Owner</th>
+             <th>Email ID</th>
+             <th>Sent Date</th>
+             <th>Next Schedule</th>
+             <th>Got Response</th>
+             <th>Action</th>
+           </tr>            
+           <?php if($getEmailSent) : ?>         
+           <?php foreach($getEmailSent as $q) : ?>         
+           
+           <tr>   
+               <td style="cursor: pointer;"><b><?= $q['link'];?></b></td>  
+               <td style="cursor: pointer;"><?= $q['owner'];?></td>  
+               <td style="cursor: pointer;"><?= $q['email_to'];?></td>   
+               <td style="cursor: pointer;"><?= ($q['sent_date']) ? date('d M,Y',strtotime($q['sent_date'])) : "Not Yet";?></td>  
+               <td style="cursor: pointer;"><?= ($q['next_date'] != 0) ? date('d M,Y',strtotime($q['next_date'])) : "-end-";?></td>    
+               <td style="cursor: pointer;"><?= bS($q['status']);?></td>              
+               <td style="cursor: pointer;">
+                <?php if($q['status'] == 0){ ?>
+                  <a href="waitinglist.php?reply=1&link=<?= $q['link'];?>&email=<?= $q['email_to'];?>" class="btn btn-outline-dark btn-sm">Mark As Replied</a> 
+                <?php }else{ ?>
+                  <a href="waitinglist.php?reply=0&link=<?= $q['link'];?>&email=<?= $q['email_to'];?>" class="btn btn-outline-dark btn-sm">Mark As Not Replied</a> 
+                <?php } ?>
+                
+                  
+            </td>               
+           </tr> 
+           <?php endforeach ?> 
+           <?php endif ?> 
+       </table>     
+        <pre>Note* - If Got Response is YES, no further automated email will be send.</pre>
+        <br><hr> 
         <footer>
             <h5>Scrapping Script | Developed By Algobasket</h5>  
         </footer>  

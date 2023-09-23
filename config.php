@@ -7,7 +7,7 @@
 */
 ob_start();
 session_start();
-error_reporting(0); 
+//error_reporting(0);  
 set_time_limit(0);  
 
 use PHPMailer\PHPMailer\PHPMailer;
@@ -52,7 +52,32 @@ function queueList()
         $data[] = $row;
 
     return $data;       
-} 
+}
+
+
+
+function queueListByStatus($status)  
+{
+  global $conn;
+  $sql = "SELECT * FROM queue WHERE status = '$status'";
+  $query = mysqli_query($conn,$sql); 
+  while($row = mysqli_fetch_assoc($query))
+        $data[] = $row;
+
+    return $data;       
+}
+
+
+
+
+function getTotalDataScrappedByQueueId()
+{
+
+
+}  
+
+
+
 
 function getQueueInfoById($id)   
 {
@@ -66,6 +91,9 @@ function getQueueInfoById($id)
 } 
 
 
+
+
+
 function deleteQueue($id)
 {
    global $conn;
@@ -74,6 +102,9 @@ function deleteQueue($id)
    return true;    
 } 
 
+
+
+
 function addnewApi($apiType,$apiVendor,$apiKey,$clientId,$clientSecret,$redirectUrl)
 {
    global $conn;
@@ -81,6 +112,9 @@ function addnewApi($apiType,$apiVendor,$apiKey,$clientId,$clientSecret,$redirect
    $query = mysqli_query($conn,$sql);
    return true;   
 }
+
+
+
 
 function getApis($type)   
 {
@@ -99,6 +133,8 @@ function getApis($type)
     return $data;    
 }
 
+
+
 function deleteSetting($id)
 {
    global $conn;
@@ -106,6 +142,9 @@ function deleteSetting($id)
    $query = mysqli_query($conn,$sql);
    return true;   
 } 
+
+
+
 
 function getBlacklistLink()
 {
@@ -117,6 +156,9 @@ function getBlacklistLink()
 
     return $data; 
 }
+
+
+
 
 function checkBlacklistedLink($link)
 {
@@ -130,6 +172,9 @@ function checkBlacklistedLink($link)
    }
        
 }
+
+
+
 
 function blacklistLink($q,$url) 
 {
@@ -146,6 +191,9 @@ function blacklistLink($q,$url)
    $query = mysqli_query($conn,$sql); 
    return true; 
 }
+
+
+
 
 
 function whitelistLink($q,$link)
@@ -169,6 +217,9 @@ function getSmtps()
     return $data;   
 }
 
+
+
+
 function addnewSmtp($name,$server,$username,$pass,$email,$port) 
 {
    global $conn;
@@ -176,6 +227,9 @@ function addnewSmtp($name,$server,$username,$pass,$email,$port)
    $query = mysqli_query($conn,$sql); 
    return true;   
 }
+
+
+
 
 function getEmailTemplates()
 {
@@ -188,13 +242,20 @@ function getEmailTemplates()
     return $data;   
 }
 
-function addnewTemplate($subject,$email_template)    
+
+
+
+
+function addnewTemplate($subject,$email_template,$numbering)     
 {
    global $conn;
-   $sql = "INSERT INTO settings SET setting_name='email-templates',subject='$subject',email_template='$email_template'"; 
+   $sql = "INSERT INTO settings SET setting_name='email-templates',subject='$subject',email_template='$email_template',numbering='$numbering'";  
    $query = mysqli_query($conn,$sql);
-   return true;  
+   return true;   
 }
+
+
+
 
  
 function createSpreadSheetsFields($links,$spreadSheetName) 
@@ -227,6 +288,10 @@ function createSpreadSheetsFields($links,$spreadSheetName)
        return $spreadsheetId;   
     }
 }   
+
+
+
+
 
 function insertSpreadSheetsRecords($links,$spreadsheetId,$data,$queueId,$saveToSpreadSheet,$saveToDB,$saveToBothSpreadAndDB) 
 {
@@ -367,74 +432,8 @@ function insertSpreadSheetsRecords($links,$spreadsheetId,$data,$queueId,$saveToS
                     } 
              }         
         }       
-}  
+}    
 
-
-
-
-function getOwnerName($link)
-{
-   global $conn;
-    $sql = "SELECT * FROM scrap_data WHERE link = '$link' OR link LIKE '%$link%'";
-    $query = mysqli_query($conn,$sql); 
-    $data = mysqli_fetch_assoc($query); 
-    return isset($data['owner_ceo_name']) ? $data['owner_ceo_name'] : "";
-}
-
-
-function getRealEmail($link)
-{
-   global $conn;
-    $sql = "SELECT * FROM scrap_data WHERE link = '$link' OR link LIKE '%$link%'";
-    $query = mysqli_query($conn,$sql); 
-    $data = mysqli_fetch_assoc($query);
-    return isset($data['email_privacy']) ? $data['email_privacy'] : "";
-}
-
-
-function getEmailQueueData($link)
-{
-    global $conn;
-    $sql = "SELECT * FROM spreadsheets WHERE links = '$link' OR links LIKE '%$link%'";
-    $query = mysqli_query($conn,$sql); 
-    $data = mysqli_fetch_assoc($query); 
-    
-    $spreadsheetId =  isset($data['spreadsheet_code']) ? $data['spreadsheet_code'] : "";   
-    $email = getRealEmail($link);
-
-    $owner_ceo_name = getOwnerName($link);
-    
-    $emailTemplates = getEmailTemplates();
-    foreach($emailTemplates as $emailTemp){};    
-    $emailTemplates = $emailTemp['email_template'];
-    $subject = $emailTemp['subject'];
-
-    $parsed_url = parse_url($link);  
-    $domain = $parsed_url['host'];  
-    $spreadsheetHref = '<a href="https://docs.google.com/spreadsheets/d/'.
-                       $spreadsheetId.'" target="__blank">https://docs.google.com/spreadsheets/d/'.$spreadsheetId.'</a>';
-    $subject = str_replace('{domain}',$domain,$subject);       
-    $emailTemplate = str_replace(['{domain}','{spreadsheetLink}'],[$domain,$spreadsheetHref],$emailTemplates);
-
-    return [ 
-        'email'   => $email,  
-        'domain'  => $domain, 
-        'subject' => $subject,
-        'owner_ceo_name' => $owner_ceo_name,  
-        'emailTemplate' => $emailTemplate, 
-    ];       
-} 
-
-function getQueuedEmails($status)
-{
-    global $conn;
-    $sql = "SELECT * FROM emails WHERE queue_instant = 'queue' OR status = '$status'";
-    $query = mysqli_query($conn,$sql); 
-    while($row = mysqli_fetch_assoc($query))
-        $data[] = $row;
-
-    return $data;  
-}
 
 
 
@@ -455,15 +454,190 @@ function getAuditData($link,$queueId)
         $data[] = $row;  
 
     return $data;     
-}   
+} 
+
+
+
+function getOwnerName($link)
+{
+   global $conn;
+    $sql = "SELECT * FROM scrap_data WHERE link = '$link' OR link LIKE '%$link%'";
+    $query = mysqli_query($conn,$sql); 
+    $data = mysqli_fetch_assoc($query); 
+    return isset($data['owner_ceo_name']) ? $data['owner_ceo_name'] : "";
+}
+
+
+
+
+
+function getRealEmail($link)
+{
+   global $conn;
+    $sql = "SELECT * FROM scrap_data WHERE link = '$link' OR link LIKE '%$link%'";
+    $query = mysqli_query($conn,$sql); 
+    $data = mysqli_fetch_assoc($query);
+    return isset($data['email_privacy']) ? $data['email_privacy'] : "";
+}
+
+
+
+
+
+function getEmailQueueData($link) 
+{
+    global $conn;
+    $sql = "SELECT * FROM spreadsheets WHERE links = '$link' OR links LIKE '%$link%'";     
+    $query = mysqli_query($conn,$sql); 
+    $data = mysqli_fetch_assoc($query);     
+    
+    $spreadsheetId =  isset($data['spreadsheet_code']) ? $data['spreadsheet_code'] : "";   
+    $email = getRealEmail($link);
+
+    $owner_ceo_name = getOwnerName($link);
+    
+    $emailTemplates = getEmailTemplates();
+    foreach($emailTemplates as $emailTemp){};    
+    $emailTemplates = $emailTemp['email_template'];
+    $subject = $emailTemp['subject'];
+
+    $parsed_url = parse_url($link);  
+    $domain = $parsed_url['host'];  
+
+
+    $spreadsheetHref = 'https://docs.google.com/spreadsheets/d/'.$spreadsheetId;    
+    $subject = str_replace('{domain}',$domain,$subject);       
+    $emailTemplate = str_replace(['{domain}','{spreadsheetLink}'],[$domain,$spreadsheetHref],$emailTemplates);
+
+    return [ 
+        'email'   => $email,  
+        'domain'  => $domain, 
+        'subject' => $subject,
+        'link' => $link,       
+        'owner_ceo_name' => $owner_ceo_name,  
+        'emailTemplate' => $emailTemplate, 
+    ];       
+} 
+
+
+
+
+
+function getQueuedEmails($status)
+{
+    global $conn;
+    $sql = "SELECT * FROM emails WHERE queue_instant = 'queue' AND status = '$status'";
+    $query = mysqli_query($conn,$sql); 
+    while($row = mysqli_fetch_assoc($query))
+        $data[] = $row;
+
+    return $data;   
+}
+
+
+function getQueuedEmailsForCron($status)      
+{
+    global $conn;
+    $sql = "SELECT * FROM emails WHERE next_date AND status = 1";
+    $query = mysqli_query($conn,$sql); 
+    while($row = mysqli_fetch_assoc($query))
+        $data[] = $row;
+
+    return $data;   
+}
+
+
+
+
+
+function updateQueueEmails($email,$link,$status,$isSent)   
+{
+    $sql = "UPDATE emails SET email_to = '$email',link='$link',status = '$status',is_sent = '$isSent'";
+    $query = mysqli_query($conn,$sql); 
+}
+
+
+
+function getEmailSent($isSent,$queueInstant)  
+{
+   global $conn;   
+
+    if($isSent && $queueInstant)
+    {
+        $sql = "SELECT * FROM emails WHERE is_sent = '$isSent' AND queue_instant = '$queueInstant'";
+    }else{
+        $sql = "SELECT * FROM emails";
+    }   
+    //echo $sql;
+    $query = mysqli_query($conn,$sql); 
+    while($row = mysqli_fetch_assoc($query)) 
+        $data[] = $row;
+
+    return $data;   
+}  
+
+
+
+function getEmailSentCount($email,$link)     
+{     
+    global $conn;      
+
+    $sql = "SELECT * FROM emails WHERE email_to = '$email' AND link = '$link'";    
+    $query = mysqli_query($conn,$sql); 
+    $row = mysqli_num_rows($query); 
+    return $row;    
+}  
+
+
+
+function getNextEmailDate($email,$link)       
+{      
+    global $conn;      
+
+    $sql = "SELECT next_date FROM emails WHERE email_to = '$email' AND link = '$link' AND status = 0 ORDER BY id DESC";          
+    $query = mysqli_query($conn,$sql); 
+    $row = mysqli_fetch_assoc($query); 
+    return $row['next_date'];         
+}
+
+
+function replyStatus($isReply,$email,$link)    
+{
+    global $conn;
+
+    if($isReply == 1)
+    {
+      $sql = "UPDATE emails SET status = 1,is_sent = 1 WHERE email_to = '$email' AND link='$link'"; 
+    }
+    if($isReply == 0) 
+    {
+      $sql = "UPDATE emails SET status = 0 WHERE email_to = '$email' AND link='$link'";    
+    }
+    
+    $query = mysqli_query($conn,$sql); 
+}  
+
+
+
+function getScrappedLinks($status)  
+{
+     global $conn;     
+ 
+    $sql = "SELECT link FROM scrap_data WHERE status = '$status' GROUP BY link ORDER BY id DESC";                        
+   
+    $query = mysqli_query($conn,$sql); 
+    while($row = mysqli_fetch_assoc($query)) 
+        $data[] = $row;
+
+    return $data;    
+}
+
 
 
 
 
 function triggerEmailApi($to,$toName,$subject,$body) 
 {
-   
-
    require 'vendor/autoload.php'; // Adjust the path if needed
 
     global $conn; 
@@ -502,6 +676,122 @@ function triggerEmailApi($to,$toName,$subject,$body)
         //return false;
     }
 }
+
+function generateEmailPermutations($name, $domain) { 
+    $name = strtolower($name);
+    $domain = strtolower($domain);
+
+    $permutations = [];
+
+    // Generate common email patterns
+    $patterns = [
+        '{first}.{last}',
+        '{first}{last}',
+        '{first}_{last}',
+        '{first}',
+        '{first}{last}@{domain}',
+        '{first}_{last}@{domain}',
+        '{first}.{last}@{domain}',
+        '{last}.{first}',
+        '{last}{first}',
+        '{last}_{first}',
+        '{last}',
+        '{last}.{first}@{domain}',
+        '{last}_{first}@{domain}',
+        '{last}{first}@{domain}',
+        '{first}@{domain}',
+        '{last}@{domain}',
+        '{first}.{last}{last}',
+        '{first}{last}{last}',
+        '{first}_{last}{last}',
+        '{first}{last}{last}@{domain}',
+        '{first}_{last}{last}@{domain}',
+        '{first}.{last}{last}@{domain}',
+        '{first}.{middle}.{last}',
+        '{first}{middle}{last}',
+        '{first}_{middle}_{last}',
+        '{first}.{middle}',
+        '{first}{middle}@{domain}',
+        '{first}_{middle}@{domain}',
+        '{first}.{middle}@{domain}',
+        '{last}.{first}.{middle}',
+        '{last}{first}{middle}',
+        '{last}_{first}_{middle}',
+        '{last}.{middle}',
+        '{last}{middle}@{domain}',
+        '{last}_{middle}@{domain}',
+        '{last}.{middle}@{domain}',
+        '{first}.{last}{middle}',
+        '{first}{last}{middle}@{domain}',
+        '{first}_{last}_{middle}@{domain}',
+        '{first}.{last}_{middle}@{domain}',
+        '{last}.{first}{middle}',
+        '{last}{first}{middle}@{domain}',
+        '{last}_{first}_{middle}@{domain}',
+        '{last}.{first}_{middle}@{domain}',
+        '{first}{last}.{middle}',
+        '{first}_{last}.{middle}@{domain}',
+        '{first}{last}_{middle}@{domain}',
+        '{last}{first}.{middle}',
+        '{last}_{first}.{middle}@{domain}',
+        '{last}{first}_{middle}@{domain}',
+        '{first}.{middle}.{last}@{domain}',
+        '{first}_{middle}_{last}@{domain}',
+        '{first}.{middle}_{last}@{domain}',
+        '{middle}.{first}.{last}@{domain}',
+        '{middle}_{first}_{last}@{domain}',
+        '{middle}.{first}_{last}@{domain}',
+        '{last}.{middle}.{first}@{domain}',
+        '{last}_{middle}_{first}@{domain}',
+        '{last}.{middle}_{first}@{domain}',
+        '{first}.{last}{middle}@{domain}',
+        '{first}{last}{middle}@{domain}',
+        '{first}_{last}_{middle}@{domain}',
+        '{last}.{first}{middle}@{domain}',
+        '{last}{first}{middle}@{domain}',
+        '{last}_{first}_{middle}@{domain}',
+        '{first}{middle}.{last}@{domain}',
+        '{first}_{middle}.{last}@{domain}',
+        '{first}{middle}_{last}@{domain}',
+        '{last}{middle}.{first}@{domain}',
+        '{last}_{middle}.{first}@{domain}',
+        '{last}{middle}_{first}@{domain}',
+        '{middle}{first}.{last}@{domain}',
+        '{middle}.{first}_{last}@{domain}',
+        '{middle}{last}.{first}@{domain}',
+        '{middle}_{last}.{first}@{domain}',
+        '{middle}.{last}{first}@{domain}',
+        '{middle}_{last}{first}@{domain}',
+        '{first}{middle}{last}@{domain}',
+        '{first}_{middle}{last}@{domain}',
+        '{first}{last}{middle}@{domain}',
+        '{first}_{last}{middle}@{domain}',
+        '{last}{middle}{first}@{domain}',
+        '{last}_{middle}{first}@{domain}',
+        '{last}{first}{middle}@{domain}',
+        '{last}_{first}{middle}@{domain}',
+        '{middle}{first}{last}@{domain}',
+        '{middle}_{first}{last}@{domain}',
+        '{middle}{last}{first}@{domain}',
+        '{middle}_{last}{first}@{domain}',
+        '{middle}{first}.{last}@{domain}',
+        '{middle}.{first}{last}@{domain}',
+        '{middle}{last}.{first}@{domain}',
+        '{middle}.{last}{first}@{domain}',
+    ];
+
+    foreach ($patterns as $pattern) {
+        $permutations[] = str_replace(['{first}', '{last}', '{middle}', '{domain}'], [$name, $name[0], substr($name, 1, 1), $domain], $pattern);
+    }
+
+    return $permutations;
+}
+
+
+
+                       
+
+
 
 
 ?> 

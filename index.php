@@ -46,28 +46,37 @@ if(isset($_POST['startScrapping']))
            {
               $query = $k." ". $l;
               $generateLinks = generateLinks($query);
-               preTest($generateLinks);  
               $data['keyword']  = trim($k);    
-              $data['location'] = trim($l);      
-              $data['links'] = $generateLinks;    
-              
-              $linkCounter += count($generateLinks); 
-              $linkCounts = $linkCounter;  
-              $queue[] = $data;         
-           }
-        }   
-    }    
+              $data['location'] = trim($l);       
+              $data['links'] = $generateLinks;      
+              $link_data[]   = $generateLinks;         
+              //$linkCounter += count($generateLinks);   
+              //$linkCounts = $linkCounter;    
+              $queue[] = $data;        
+           } 
+        }  
+       
+        $links = $link_data;
+        $singleArray = array_unique(call_user_func_array('array_merge', $links)); 
+        $linkCounts = count($singleArray);      
+    }           
     
-    // if($queue)
-    // {  
-    //    $created_at = date('d M,Y');
-    //    $updated_at = date('d M,Y'); 
+    if($queue) 
+    {  
+       $created_at = date('d M,Y');
+       $updated_at = date('d M,Y'); 
      
-    //    $json = trim(json_encode($queue));     
-    //    $sql = "INSERT INTO queue SET name='$title',data='$json',link_counts='$linkCounts',created_at='$created_at',updated_at='$updated_at',status=0";   
-    //    mysqli_query($conn,$sql);            
-    // }  
+       $json  = trim(json_encode($queue));     
+       $json2 = trim(json_encode($singleArray));         
+       $sql = "INSERT INTO queue SET name='$title',data='$json',data2='$json2',link_counts='$linkCounts',created_at='$created_at',updated_at='$updated_at',status=0";   
+       mysqli_query($conn,$sql);            
+    }  
          
+}
+
+function removeDuplicates($array) 
+{
+    return array_values(array_unique($array));
 }
 
  if(@$_GET['operation'] == 'delete') 
@@ -75,7 +84,12 @@ if(isset($_POST['startScrapping']))
   deleteQueue($_GET['id']);  
   header('location:index.php');
   exit;       
-}          
+}
+
+ if(isset($_GET['id'])) 
+{  
+     
+}                  
 ?>   
 <!doctype html>
 <html lang="en">
@@ -98,31 +112,7 @@ if(isset($_POST['startScrapping']))
   
    <div class="container">
 
-    <nav class="navbar navbar-expand-lg bg-body-tertiary navbar-success">
-      <div class="container-fluid">
-        <a class="navbar-brand h1" href="index.php">HIRE A GEEK</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-          <div class="navbar-nav">
-            <a class="nav-link active h1" aria-current="page" href="index.php">Home</a>
-             <?php if(@$_SESSION['username']){ ?> 
-            <a class="nav-link h1" href="audit-ready-to-process.php">Audit Ready To Process</a>
-            <a class="nav-link h1" href="settings.php?s=email-verify-api">Email Verify API</a>
-            <a class="nav-link h1" href="settings.php?s=smtp">SMTP Settings</a> 
-            <a class="nav-link h1" href="settings.php?s=email-templates">Email Template Settings</a>  
-            <a class="nav-link h1" href="blacklisted.php">Blacklisted</a>  
-       
-             <a class="nav-link h1" href="auth.php?logout=1">Logout</a> 
-        <?php }else{ ?>
-             <a class="nav-link h1 btn-success" href="auth.php" style="float: right;">Login</a>       
-        <?php } ?> 
-            
-          </div>  
-        </div>
-      </div>
-    </nav>
+    <?php include 'menubar.php';?>  
 
    <center>
         <br><br><br><br><br><br>
@@ -165,12 +155,12 @@ if(isset($_POST['startScrapping']))
                     <i class="bi bi-trash3-fill"></i>  
                   </a> 
                </td>
-               <td style="width:50px;">
-                 <a href="audit-worker.php?id=<?= $q['id'];?>" class="btn btn-dark btn-sm" target="__SELF"><i class="bi bi-play-fill"></i></a>
+               <td style="width:120px;">
+                 <a href="audit-worker.php?id=<?= $q['id'];?>" class="btn btn-dark btn-sm" target="__SELF">Real Scrap<i class="bi bi-play-fill"></i></a>
               </td> 
-              <td style="width:50px;"> 
+              <td style="width:120px;">  
                 <!-- <a href="javascript:void(0)" class="btn btn-success btn-sm" onclick="runAudit(<?= $q['id'];?>)"><i class="bi bi-play-fill"></i></a> -->
-                <a href="audit.php?id=<?= $q['id'];?>" class="btn btn-success btn-sm" target="__blank"><i class="bi bi-play-fill"></i></a> 
+                <a href="audit.php?id=<?= $q['id'];?>" class="btn btn-success btn-sm" target="__blank">Test Scrap<i class="bi bi-play-fill"></i></a> 
               </td> 
               <?php endif ?> 
            </tr>
@@ -183,10 +173,9 @@ if(isset($_POST['startScrapping']))
             <center><h5>Found <?= linkCounts($links);?> links</h5></center>     
             <table class="table table-sm fs-6 fst-italic"> 
 
-                <?php $i = 1;foreach($links as $link){ ?>
+                <?php $i = 1;foreach($links as $link){ ?> 
 
-
-                    <?php foreach($link as $url) { ?>  
+                    <?php foreach($link as $url) { ?>   
                            <tr> 
                              <td><?= $i;?></td>   
                              <td><small><?= substr($url,0,100);?>...</small></td>      

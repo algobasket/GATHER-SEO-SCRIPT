@@ -41,7 +41,8 @@ if(isset($_POST['addEmailTemplate']))
 {
   $subject     = $_POST['subject'];
   $template   = $_POST['template'];
-  $result = addnewTemplate($subject,$template);      
+  $numbering   = $_POST['numbering']; 
+  $result = addnewTemplate($subject,$template,$numbering);      
 }   
 
  if(@$_GET['operation'] == 'delete') 
@@ -61,7 +62,7 @@ if(isset($_POST['addEmailTemplate']))
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Bungee Spice|Silkscreen">
      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css" integrity="sha384-b6lVK+yci+bfDmaY1u0zE8YYJt0TZxLEAFyYSLHId4xoVvsrQu3INevFKo+Xir8e" crossorigin="anonymous"> 
     <style type="text/css">
-         input[type="text"],textarea[name="locations"],textarea[name="template"],select[name="apiType"],.borderTable{    
+         input[type="text"],textarea[name="locations"],textarea[name="template"],select[name="apiType"],select[name="numbering"],.borderTable{    
             border:1px solid #000 !important;
             border-radius: 0 !important;
         }
@@ -78,37 +79,13 @@ if(isset($_POST['addEmailTemplate']))
   
    <div class="container">
 
-     <nav class="navbar navbar-expand-lg bg-body-tertiary navbar-success">
-              <div class="container-fluid">
-                <a class="navbar-brand h1" href="index.php">HIRE A GEEK</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-                  <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-                  <div class="navbar-nav">
-                    <a class="nav-link active h1" aria-current="page" href="index.php">Home</a>
-                     <?php if(@$_SESSION['username']){ ?> 
-                    <a class="nav-link h1" href="audit-ready-to-process.php">Audit Ready To Process</a>
-                    <a class="nav-link h1" href="settings.php?s=email-verify-api">Email Verify API</a>
-                    <a class="nav-link h1" href="settings.php?s=smtp">SMTP Settings</a> 
-                    <a class="nav-link h1" href="settings.php?s=email-templates">Email Template Settings</a>  
-                    <a class="nav-link h1" href="blacklisted.php">Blacklisted</a>  
-               
-                     <a class="nav-link h1" href="auth.php?logout=1">Logout</a> 
-                     <?php }else{ ?> 
-                     <a class="nav-link h1 btn-success" href="auth.php" style="float: right;">Login</a>       
-                     <?php } ?> 
-                    
-                  </div>  
-                </div>
-              </div>
-         </nav>
+     <?php include 'menubar.php';?>  
 
    <center>
       
        <?php if($s == 'email-verify-api') : ?>
              <br><br><br><br><br><br> 
-             <h1 class="text-center display-2 gfonts">EMAIL SETTINGS</h1>    
+             <h1 class="text-center display-2 gfonts">API</h1>    
              <hr>
           <form method="POST"> 
             <table class="table table-bordered">
@@ -175,7 +152,7 @@ if(isset($_POST['addEmailTemplate']))
 
     <?php if($s == 'smtp') : ?>
            <br><br><br><br><br><br> 
-           <h1 class="text-center display-2 gfonts">SMTP SETTINGS</h1>    
+           <h1 class="text-center display-2 gfonts">SMTP</h1>    
            <hr>
           <form method="POST"> 
             <table class="table table-bordered">
@@ -237,10 +214,21 @@ if(isset($_POST['addEmailTemplate']))
 
     <?php if($s == 'email-templates') : ?> 
           <br><br><br><br><br><br> 
-          <h1 class="text-center display-2 gfonts">EMAIL TEMPLATE SETTINGS</h1>    
+          <h1 class="text-center display-2 gfonts">TEMPLATE</h1>    
           <hr> 
           <form method="POST"> 
             <table class="table table-bordered">
+                 <tr>
+                    <td>
+                        <select class="form-select" name="numbering">
+                            <option>Numbering</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option> 
+                        </select> 
+                    </td> 
+                </tr>
                 <tr>
                     <td><input type="text" class="form-control" name="subject" placeholder="Subject" required></td> 
                 </tr>
@@ -254,20 +242,25 @@ if(isset($_POST['addEmailTemplate']))
           </form>  
 
          <br><hr>
-         <table class="table table-bordered">
+         
             <?php $getEmailTemplates = getEmailTemplates();?> 
             <?php foreach($getEmailTemplates as $eTemplate) : ?>
-            <tr class="borderTable">
-                <td>Subject : <?= $eTemplate['subject'];?></td> 
-            </tr>
-            <tr class="borderTable">    
-                <td><?= $eTemplate['email_template'];?></td> 
-            </tr>
-            <tr class="borderTable">          
-                <td><a href="javascript:void(0)" data-delete="settings.php?s=email-templates&id=<?= $eTemplate['id'];?>&operation=delete" data-title="Delete" data-msg="Do you want to delete it ?"  class="btn btn-outline-dark openModal">Delete</a></td>  
-            </tr>
+                <table class="table table-bordered">
+                     <tr class="borderTable">
+                        <td>Numbering : <?= $eTemplate['numbering'];?></td> 
+                    </tr>
+                    <tr class="borderTable">
+                        <td>Subject : <?= $eTemplate['subject'];?></td> 
+                    </tr>
+                    <tr class="borderTable">    
+                        <td><?= $eTemplate['email_template'];?></td> 
+                    </tr>
+                    <tr class="borderTable">          
+                        <td><a href="javascript:void(0)" data-delete="settings.php?s=email-templates&id=<?= $eTemplate['id'];?>&operation=delete" data-title="Delete" data-msg="Do you want to delete it ?"  class="btn btn-outline-dark btn-sm openModal">Delete</a></td>  
+                    </tr>
+                </table>   
            <?php endforeach ?>
-        </table>
+        
 
     <?php endif ?>    
         
